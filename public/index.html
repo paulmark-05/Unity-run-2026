@@ -264,8 +264,36 @@
             <span class="k">Registration fee</span>
             <span class="v" id="feeAmount">₹500</span>
           </div>
-          <div class="rzp-note">
-            Secure payment via <span class="rzp-badge">Razorpay</span> — UPI, cards &amp; net banking accepted
+
+          <div class="subhead">Pay via UPI</div>
+          <div class="upi-pay">
+            <a class="upi-qr" id="upiLink" href="#" aria-label="Pay via UPI">
+              <img src="assets/upi-qr.png" alt="UPI payment QR code" />
+              <span class="upi-qr-hint sans">Tap to pay on mobile</span>
+            </a>
+            <div class="upi-copy">
+              <p class="upi-instructions">
+                Scan this QR with any UPI app (GPay, PhonePe, Paytm), or tap it on your phone to open your UPI app directly.
+              </p>
+              <div class="upi-vpa-line" id="upiVpaLine" hidden>
+                <span class="k label">Paying to</span>
+                <span class="v" id="upiVpaText"></span>
+              </div>
+              <p class="upi-instructions">
+                After paying, take a screenshot of the confirmation and upload it below.
+              </p>
+            </div>
+          </div>
+
+          <div class="f-group">
+            <label class="f-label" for="upiId">Your UPI ID (the one you paid from)</label>
+            <input class="f-input" id="upiId" name="upiId" placeholder="yourname@bank" required />
+          </div>
+
+          <div class="f-group">
+            <label class="f-label" for="paymentScreenshot">Upload payment screenshot</label>
+            <input class="f-file" id="paymentScreenshot" name="paymentScreenshot" type="file" accept="image/*" required />
+            <div class="f-hint sans">PNG, JPG or WEBP · up to 5 MB</div>
           </div>
         </div>
       </form>
@@ -280,7 +308,7 @@
         <h3>You're registered!</h3>
         <p>A confirmation has been recorded for Unity Run 2026. Your bib reference is below — please save it.</p>
         <div class="success-bib" id="successBib"></div>
-        <p>Details and event-day instructions will be sent to your email closer to the date.</p>
+        <p>Your payment will be verified by the organizers within 2–3 working days. Details and event-day instructions will be sent to your email closer to the date.</p>
         <div class="form-footer" style="justify-content:center; margin-top: 10px;">
           <button type="button" class="btn btn-outline" id="closeSuccess">Done</button>
         </div>
@@ -289,7 +317,6 @@
   </div>
 </div>
 
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

@@ -20,7 +20,10 @@
 
   let currentStep = 1;
   let fees = { '3K': 500, '5K': 500, '10K': 500 };
-  let razorpayKeyId = null;
+  let upiVpa = null;
+  let upiPayeeName = 'Unity Run 2026';
+  let upiOrgId = '159020';
+  let upiMerchantCode = '7800';
 
   function openModal() {
     modal.classList.add('open');
@@ -30,7 +33,11 @@
       .then((r) => r.json())
       .then((cfg) => {
         if (cfg.fees) fees = cfg.fees;
-        razorpayKeyId = cfg.keyId;
+        upiVpa = cfg.upiVpa;
+        if (cfg.upiPayeeName) upiPayeeName = cfg.upiPayeeName;
+        if (cfg.upiOrgId) upiOrgId = cfg.upiOrgId;
+        if (cfg.upiMerchantCode) upiMerchantCode = cfg.upiMerchantCode;
+        renderUpiDetails();
       })
       .catch(() => {});
     const dateField = document.getElementById('waiverDate');
@@ -66,9 +73,10 @@
     arrow.className = 'arrow';
     arrow.textContent = '→';
     if (n === 4) {
-      nextBtn.append('Pay & Register ');
+      nextBtn.append('Submit Registration ');
       nextBtn.append(arrow);
       renderSummary();
+      renderUpiDetails();
     } else {
       nextBtn.append('Continue ');
       nextBtn.append(arrow);
@@ -117,6 +125,14 @@
       if (!getFieldValue('waiverAccepted')) return 'You must agree to the participant waiver to continue.';
       if (!getFieldValue('signature')) return 'Please type your full name as digital consent.';
     }
+    if (n === 4) {
+      const upiId = getFieldValue('upiId');
+      if (!upiId) return 'Please enter the UPI ID you paid from.';
+      if (!/^[\w.\-]{2,}@[\w.\-]{2,}$/.test(upiId)) return 'That UPI ID looks incomplete — it should look like name@bank.';
+      const fileInput = document.getElementById('paymentScreenshot');
+      if (!fileInput.files || !fileInput.files[0]) return 'Please upload a screenshot of your UPI payment.';
+      if (fileInput.files[0].size > 5 * 1024 * 1024) return 'That screenshot is larger than 5 MB. Please upload a smaller image.';
+    }
     return null;
   }
 
@@ -135,7 +151,39 @@
       waiverAccepted: getFieldValue('waiverAccepted'),
       signature: getFieldValue('signature'),
       waiverDate: getFieldValue('waiverDate'),
+      upiId: getFieldValue('upiId'),
     };
+  }
+
+  function renderUpiDetails() {
+    const link = document.getElementById('upiLink');
+    const vpaLine = document.getElementById('upiVpaLine');
+    const vpaText = document.getElementById('upiVpaText');
+    if (!link) return;
+
+    if (!upiVpa) {
+      link.removeAttribute('href');
+      vpaLine.hidden = true;
+      return;
+    }
+    const category = getFieldValue('category');
+    const amount = fees[category] || 500;
+    // Mirrors the bank QR's parameters so UPI apps treat it as the same merchant.
+    const params = new URLSearchParams({
+      ver: '01',
+      pa: upiVpa,
+      pn: upiPayeeName,
+      tn: `Unity Run 2026 ${category || ''}`.trim(),
+      am: String(amount),
+      cu: 'INR',
+      mode: '00',
+      purpose: '00',
+      orgid: upiOrgId,
+      mc: upiMerchantCode,
+    });
+    link.href = `upi://pay?${params.toString()}`;
+    vpaText.textContent = upiVpa;
+    vpaLine.hidden = false;
   }
 
   function renderSummary() {
@@ -162,84 +210,27 @@
     return div.innerHTML;
   }
 
-  function setPaying(isPaying) {
-    nextBtn.disabled = isPaying;
-    backBtn.style.pointerEvents = isPaying ? 'none' : 'auto';
-    if (isPaying) {
-      nextBtn.textContent = 'Processing…';
+  function setSubmitting(isSubmitting) {
+    nextBtn.disabled = isSubmitting;
+    backBtn.style.pointerEvents = isSubmitting ? 'none' : 'auto';
+    if (isSubmitting) {
+      nextBtn.textContent = 'Submitting…';
     }
   }
 
-  async function startPayment() {
+  async function submitRegistration() {
     hideError();
+    setSubmitting(true);
+
     const registration = collectRegistration();
-    const fee = fees[registration.category] || 500;
-    setPaying(true);
-
-    let order;
-    try {
-      const res = await fetch('/api/create-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category: registration.category }),
-      });
-      order = await res.json();
-      if (!res.ok) throw new Error(order.error || 'Could not start payment.');
-    } catch (err) {
-      setPaying(false);
-      showError(err.message || 'Could not start payment. Please try again.');
-      return;
-    }
-
-    if (!razorpayKeyId) {
-      setPaying(false);
-      showError('Payments are not yet configured for this event. Please check back soon.');
-      return;
-    }
-
-    const options = {
-      key: razorpayKeyId,
-      amount: order.amount,
-      currency: order.currency,
-      name: 'Unity Run 2026',
-      description: `${registration.category} Registration`,
-      order_id: order.orderId,
-      prefill: {
-        name: registration.fullName,
-        email: registration.email,
-        contact: registration.mobile,
-      },
-      theme: { color: '#1B2260' },
-      handler: function (response) {
-        finalizeRegistration(response, registration);
-      },
-      modal: {
-        ondismiss: function () {
-          setPaying(false);
-        },
-      },
-    };
-
-    const rzp = new Razorpay(options);
-    rzp.on('payment.failed', function () {
-      setPaying(false);
-      showError('Payment failed or was cancelled. Please try again.');
+    const payload = new FormData();
+    Object.entries(registration).forEach(([key, value]) => {
+      payload.append(key, value);
     });
-    rzp.open();
-  }
+    payload.append('paymentScreenshot', document.getElementById('paymentScreenshot').files[0]);
 
-  async function finalizeRegistration(paymentResponse, registration) {
     try {
-      const res = await fetch('/api/verify-and-register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          razorpay_order_id: paymentResponse.razorpay_order_id,
-          razorpay_payment_id: paymentResponse.razorpay_payment_id,
-          razorpay_signature: paymentResponse.razorpay_signature,
-          registration,
-        }),
-      });
+      const res = await fetch('/api/register', { method: 'POST', body: payload });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Registration could not be completed.');
 
@@ -248,9 +239,9 @@
       formFooter.style.display = 'none';
       successView.style.display = 'block';
     } catch (err) {
-      showError(err.message || 'Payment succeeded but registration could not be saved. Please contact the organizers.');
-    } finally {
-      setPaying(false);
+      showError(err.message || 'Registration could not be saved. Please try again.');
+      setSubmitting(false);
+      showStep(4);
     }
   }
 
@@ -265,7 +256,7 @@
       currentStep += 1;
       showStep(currentStep);
     } else {
-      startPayment();
+      submitRegistration();
     }
   });
 

@@ -313,8 +313,76 @@ footer.site { background: var(--paper); color: var(--ink-soft); padding: 44px 0;
 .fee-line { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 20px 0; }
 .fee-line .k { font-size: 0.84rem; color: var(--ink-soft); }
 .fee-line .v { font-family: Arial, system-ui, sans-serif; font-weight: 700; font-size: 1.25rem; color: var(--navy); }
-.rzp-note { display: flex; align-items: center; gap: 10px; font-family: Arial, system-ui, sans-serif; font-size: 0.73rem; color: var(--ink-soft); margin-top: -4px; margin-bottom: 20px; }
-.rzp-badge { font-weight: 700; color: var(--navy); background: var(--sky-pale); border: 1px solid var(--line); padding: 3px 8px; }
+/* UPI payment block */
+.upi-pay {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  gap: 22px;
+  align-items: start;
+  margin-bottom: 22px;
+}
+.upi-qr {
+  display: block;
+  border: 1px solid var(--line);
+  padding: 12px 12px 8px;
+  background: #fff;
+  text-decoration: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.upi-qr:hover { border-color: var(--navy); box-shadow: 0 8px 22px -12px rgba(27,34,96,0.45); }
+.upi-qr img { width: 100%; height: auto; }
+.upi-qr-hint {
+  display: block;
+  text-align: center;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: var(--red);
+  margin-top: 8px;
+}
+.upi-copy { display: flex; flex-direction: column; gap: 12px; }
+.upi-instructions { margin: 0; font-size: 0.88rem; line-height: 1.6; color: var(--ink-soft); }
+.upi-vpa-line {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--sky);
+  padding: 10px 12px;
+  background: var(--sky-pale);
+}
+.upi-vpa-line .v {
+  font-family: Arial, system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--navy);
+  word-break: break-all;
+}
+.f-file {
+  font-family: Arial, system-ui, sans-serif;
+  font-size: 0.82rem;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px dashed var(--line);
+  background: var(--paper);
+  color: var(--ink-soft);
+}
+.f-file::file-selector-button {
+  font-family: Arial, system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border: none;
+  background: var(--navy);
+  color: #fff;
+  padding: 8px 14px;
+  margin-right: 12px;
+  cursor: pointer;
+}
+.f-file::file-selector-button:hover { background: var(--navy-deep); }
+.f-hint { font-size: 0.72rem; color: var(--ink-soft); margin-top: 6px; }
 
 .form-footer { display: flex; justify-content: space-between; align-items: center; }
 
@@ -365,4 +433,6 @@ footer.site { background: var(--paper); color: var(--ink-soft); padding: 44px 0;
   nav.links { display: none; }
   .f-row, .f-row.three { grid-template-columns: 1fr; }
   .org-text { display: none; }
+  .upi-pay { grid-template-columns: 1fr; }
+  .upi-qr { max-width: 240px; margin: 0 auto; }
 }
