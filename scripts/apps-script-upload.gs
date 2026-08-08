@@ -10,8 +10,11 @@
  * Then put the resulting /exec URL in the server's APPS_SCRIPT_UPLOAD_URL.
  */
 
-const FOLDER_ID = '1EE-YOBK9mFiN6HFAxM3__hw5ne_x-N1F';
-const SHARED_SECRET = '6764c4ad18a9168b47bcb39d845c91b3b25ee0ec0b8049ae';
+// Fill both of these in inside the Apps Script editor before deploying.
+// They are deliberately not committed: SHARED_SECRET must match APPS_SCRIPT_SECRET
+// in the server's .env, and FOLDER_ID is the Drive folder screenshots go into.
+const FOLDER_ID = 'PASTE_DRIVE_FOLDER_ID_HERE';
+const SHARED_SECRET = 'PASTE_SHARED_SECRET_HERE';
 
 function doPost(e) {
   try {

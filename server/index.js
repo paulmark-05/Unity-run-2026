@@ -68,12 +68,23 @@ app.post('/api/register', upload.single('paymentScreenshot'), async (req, res) =
 
     const registrationId = `UR26-${Date.now().toString(36).toUpperCase()}`;
 
-    let screenshotLink;
-    try {
-      screenshotLink = await uploadPaymentScreenshot(req.file, registrationId);
-    } catch (err) {
-      console.error('screenshot upload failed:', err.message);
-      return res.status(500).json({ error: 'Your payment screenshot could not be uploaded. Please try again.' });
+    // Screenshot uploads need the Apps Script endpoint (see scripts/apps-script-upload.gs).
+    // Until it is deployed the form still works, but the proof of payment is discarded —
+    // registrations are flagged in the sheet so nothing silently looks verified.
+    const uploadConfigured = Boolean(process.env.APPS_SCRIPT_UPLOAD_URL && process.env.APPS_SCRIPT_SECRET);
+    let screenshotLink = 'NOT SAVED — upload endpoint not configured';
+    let paymentStatus = 'Pending verification — screenshot missing';
+
+    if (uploadConfigured) {
+      try {
+        screenshotLink = await uploadPaymentScreenshot(req.file, registrationId);
+        paymentStatus = 'Pending verification';
+      } catch (err) {
+        console.error('screenshot upload failed:', err.message);
+        return res.status(500).json({ error: 'Your payment screenshot could not be uploaded. Please try again.' });
+      }
+    } else {
+      console.warn('WARNING: APPS_SCRIPT_UPLOAD_URL is not set — screenshot was NOT saved.');
     }
 
     await appendRegistration([
@@ -92,7 +103,7 @@ app.post('/api/register', upload.single('paymentScreenshot'), async (req, res) =
       FEES[registration.category],
       registration.upiId,
       screenshotLink,
-      'Pending verification',
+      paymentStatus,
       'Yes',
       registration.signature,
     ]);
