@@ -1,42 +1,47 @@
-const { Readable } = require('stream');
-const { google } = require('googleapis');
-
-function getAuth() {
-  if (!process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
-    throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON is not set');
-  }
-  const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
-  return new google.auth.GoogleAuth({
-    credentials,
-    scopes: ['https://www.googleapis.com/auth/drive.file'],
-  });
-}
-
 /**
- * Uploads a payment screenshot to the configured Drive folder.
- * Returns a link the organizers can open from the spreadsheet.
+ * Uploads payment screenshots into the organizer's Drive folder.
+ *
+ * Uploads go through a Google Apps Script web app rather than the Drive API
+ * directly: a service account has no storage quota of its own, so it cannot
+ * own files in a personal Google Drive. The Apps Script runs as the organizer,
+ * so the files are owned by — and stored against — that account.
+ * See scripts/apps-script-upload.gs.
  */
+
 async function uploadPaymentScreenshot(file, registrationId) {
-  if (!process.env.GOOGLE_DRIVE_FOLDER_ID) {
-    throw new Error('GOOGLE_DRIVE_FOLDER_ID is not set');
+  const endpoint = process.env.APPS_SCRIPT_UPLOAD_URL;
+  const secret = process.env.APPS_SCRIPT_SECRET;
+
+  if (!endpoint || !secret) {
+    throw new Error('APPS_SCRIPT_UPLOAD_URL / APPS_SCRIPT_SECRET are not set');
   }
-  const auth = getAuth();
-  const drive = google.drive({ version: 'v3', auth });
 
   const extension = (file.originalname.match(/\.[a-zA-Z0-9]+$/) || ['.png'])[0];
-  const res = await drive.files.create({
-    requestBody: {
-      name: `${registrationId}${extension}`,
-      parents: [process.env.GOOGLE_DRIVE_FOLDER_ID],
-    },
-    media: {
+
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      secret,
+      filename: `${registrationId}${extension}`,
       mimeType: file.mimetype,
-      body: Readable.from(file.buffer),
-    },
-    fields: 'id, webViewLink',
+      data: file.buffer.toString('base64'),
+    }),
   });
 
-  return res.data.webViewLink;
+  if (!res.ok) {
+    throw new Error(`Upload endpoint returned ${res.status}`);
+  }
+
+  const result = await res.json();
+  if (result.error) {
+    throw new Error(result.error);
+  }
+  if (!result.url) {
+    throw new Error('Upload endpoint did not return a file URL');
+  }
+
+  return result.url;
 }
 
 module.exports = { uploadPaymentScreenshot };
