@@ -41,17 +41,24 @@ The site runs at `http://localhost:3000`.
 5. Minify the JSON key to a single line and put it in `.env` as `GOOGLE_SERVICE_ACCOUNT_JSON`.
 6. Copy the Sheet ID from its URL (`docs.google.com/spreadsheets/d/<THIS_PART>/edit`) into `GOOGLE_SHEET_ID`.
 
-### 3. Google Drive folder (where payment screenshots go)
-1. In Google Drive, create a folder, e.g. **Unity Run 2026 — Payment Screenshots**.
-2. Share it with the same service account email, with **Editor** access.
-3. Open the folder and copy its ID from the URL (`drive.google.com/drive/folders/<THIS_PART>`) into `GOOGLE_DRIVE_FOLDER_ID`.
-4. Make sure the **Google Drive API** is enabled in the same Google Cloud project (same place you enabled the Sheets API).
+### 3. Payment screenshot uploads (Apps Script)
+Screenshots can't be uploaded with the service account: service accounts have no
+storage quota, so they can't own files in a personal Google Drive. Instead, a small
+Apps Script web app runs inside the organizer's own account and saves the files there.
+
+1. In Google Drive, create a folder, e.g. **Unity Run 2026 — Payment Screenshots**, and copy its ID from the URL into `GOOGLE_DRIVE_FOLDER_ID`.
+2. Go to [script.google.com](https://script.google.com) → **New project**.
+3. Paste in the contents of [`scripts/apps-script-upload.gs`](scripts/apps-script-upload.gs) (the folder ID and shared secret are already filled in).
+4. **Deploy → New deployment → Web app**, with **Execute as: Me** and **Who has access: Anyone**, then **Deploy** and authorize it.
+5. Copy the deployment's `/exec` URL into `APPS_SCRIPT_UPLOAD_URL`, and make sure `APPS_SCRIPT_SECRET` matches the secret in the script.
+
+The endpoint is unauthenticated by URL, so the shared secret is what stops strangers uploading into the folder. If it ever leaks, change it in both the script and `.env`, and redeploy the script.
 
 ### 4. Deploy to Render
 1. Push this repo to GitHub (already done if you're reading this from the repo).
 2. On [render.com](https://render.com), create a **New Web Service**, connect the `Unity-run-2026` GitHub repo.
 3. Build command: `npm install`. Start command: `npm start`.
-4. Add the environment variables from `.env` (`UPI_VPA`, `UPI_PAYEE_NAME`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `GOOGLE_SHEET_ID`, `GOOGLE_SHEET_TAB`, `GOOGLE_DRIVE_FOLDER_ID`) under the service's **Environment** tab — never commit `.env` itself.
+4. Add the environment variables from `.env` (`UPI_VPA`, `UPI_PAYEE_NAME`, `UPI_ORG_ID`, `UPI_MERCHANT_CODE`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `GOOGLE_SHEET_ID`, `GOOGLE_SHEET_TAB`, `GOOGLE_DRIVE_FOLDER_ID`, `APPS_SCRIPT_UPLOAD_URL`, `APPS_SCRIPT_SECRET`) under the service's **Environment** tab — never commit `.env` itself.
 5. Deploy. Render gives you a `https://unity-run-2026.onrender.com`-style URL; a custom domain can be attached later from the same dashboard.
 
 ## Notes
