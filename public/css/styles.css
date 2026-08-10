@@ -346,6 +346,38 @@ footer.site { background: var(--paper); color: var(--ink-soft); padding: 44px 0;
   color: var(--navy);
   word-break: break-all;
 }
+.bank-details {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--navy);
+  background: var(--sky-pale);
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: minmax(120px, auto) 1fr;
+  gap: 8px 18px;
+}
+.bank-details dt {
+  font-family: Arial, system-ui, sans-serif;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+  align-self: center;
+}
+.bank-details dd {
+  margin: 0;
+  font-family: Arial, system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--navy);
+  word-break: break-word;
+}
+.bank-details .missing {
+  font-weight: 400;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
 .f-file {
   font-family: Arial, system-ui, sans-serif;
   font-size: 0.82rem;
@@ -422,4 +454,6 @@ footer.site { background: var(--paper); color: var(--ink-soft); padding: 44px 0;
   .org-text { display: none; }
   .upi-pay { grid-template-columns: 1fr; }
   .upi-qr { max-width: 240px; margin: 0 auto; }
+  .bank-details { grid-template-columns: 1fr; gap: 2px; }
+  .bank-details dd { margin-bottom: 10px; }
 }

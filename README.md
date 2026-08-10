@@ -4,7 +4,7 @@ Event website and registration system for Unity Run 2026 — Barasat Stadium, 20
 
 - Static landing page (`public/`)
 - 4-step registration form (Personal Details → Run Preferences → Waiver → Payment)
-- UPI payment by QR code — runners pay, then submit their UPI ID and a screenshot as proof
+- Payment by UPI QR or bank transfer — runners pay, then submit the account they paid from and a screenshot as proof
 - Registrations are written to a Google Sheet; screenshots are uploaded to a Google Drive folder and linked from the sheet
 - Payments are verified manually by the organizers (each row lands as `Pending verification`)
 
@@ -27,14 +27,19 @@ The site runs at `http://localhost:3000`.
 
 ## What you need before this goes live
 
-### 1. UPI payment details
-1. Save the payment QR code image as `public/assets/upi-qr.png` — this is what runners scan.
-2. Put the UPI ID the QR pays into in `.env` as `UPI_VPA` (e.g. `someone@okaxis`). This powers the "tap to pay" deep link that opens a UPI app directly on mobile.
-3. Set `UPI_PAYEE_NAME` to the name that should appear in the runner's UPI app.
+### 1. Payment details
+Runners choose between UPI and bank transfer on the last step of the form.
+
+**UPI**
+1. `UPI_VPA` is the UPI ID being paid into (e.g. `someone@okaxis`), and `UPI_PAYEE_NAME` is the name shown in the runner's UPI app.
+2. `npm run qr` regenerates `public/assets/upi-qr.png` with the fee baked in — rerun it whenever the fee changes (`npm run qr -- 750` to override).
+
+**Bank transfer**
+3. Fill in `BANK_ACCOUNT_NAME`, `BANK_ACCOUNT_NUMBER`, `BANK_IFSC`, `BANK_NAME` and `BANK_BRANCH`. Anything left blank shows as "to be confirmed" on the form, so fill these in before going live.
 
 ### 2. Google Sheet (where registrations land)
 1. Create a new Google Sheet. Add a header row to the first tab, e.g.:
-   `Timestamp | Registration ID | Full Name | DOB | Gender | Email | Mobile | Emergency Name | Emergency Relationship | Emergency Number | Category | T-Shirt Size | Fee | UPI ID (payer) | Payment Screenshot | Payment Status | Waiver Accepted | Signature`
+   `Timestamp | Registration ID | Full Name | DOB | Gender | Email | Mobile | Emergency Name | Emergency Relationship | Emergency Number | Category | T-Shirt Size | Fee | Payment Method | Payer UPI ID | Payer Account Name | Payer Account Number | Payer IFSC | Payment Screenshot | Payment Status | Waiver Accepted | Signature`
 2. In [Google Cloud Console](https://console.cloud.google.com/), create a project (or use an existing one), enable the **Google Sheets API**, and create a **Service Account**.
 3. Create a JSON key for that service account and download it.
 4. Share your Google Sheet with the service account's email address (found inside the JSON, field `client_email`) — give it **Editor** access.
@@ -58,7 +63,7 @@ The endpoint is unauthenticated by URL, so the shared secret is what stops stran
 1. Push this repo to GitHub (already done if you're reading this from the repo).
 2. On [render.com](https://render.com), create a **New Web Service**, connect the `Unity-run-2026` GitHub repo.
 3. Build command: `npm install`. Start command: `npm start`.
-4. Add the environment variables from `.env` (`UPI_VPA`, `UPI_PAYEE_NAME`, `UPI_ORG_ID`, `UPI_MERCHANT_CODE`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `GOOGLE_SHEET_ID`, `GOOGLE_SHEET_TAB`, `GOOGLE_DRIVE_FOLDER_ID`, `APPS_SCRIPT_UPLOAD_URL`, `APPS_SCRIPT_SECRET`) under the service's **Environment** tab — never commit `.env` itself.
+4. Add the environment variables from `.env` (`UPI_VPA`, `UPI_PAYEE_NAME`, `UPI_ORG_ID`, `UPI_MERCHANT_CODE`, `BANK_ACCOUNT_NAME`, `BANK_ACCOUNT_NUMBER`, `BANK_IFSC`, `BANK_NAME`, `BANK_BRANCH`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `GOOGLE_SHEET_ID`, `GOOGLE_SHEET_TAB`, `GOOGLE_DRIVE_FOLDER_ID`, `APPS_SCRIPT_UPLOAD_URL`, `APPS_SCRIPT_SECRET`) under the service's **Environment** tab — never commit `.env` itself.
 5. Deploy. Render gives you a `https://unity-run-2026.onrender.com`-style URL; a custom domain can be attached later from the same dashboard.
 
 ## Notes

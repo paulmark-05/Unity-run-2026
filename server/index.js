@@ -29,14 +29,23 @@ app.get('/api/config', (req, res) => {
     upiPayeeName: process.env.UPI_PAYEE_NAME || 'Unity Run 2026',
     upiOrgId: process.env.UPI_ORG_ID || '159020',
     upiMerchantCode: process.env.UPI_MERCHANT_CODE || '7800',
+    bankDetails: {
+      accountName: process.env.BANK_ACCOUNT_NAME || '',
+      accountNumber: process.env.BANK_ACCOUNT_NUMBER || '',
+      ifsc: process.env.BANK_IFSC || '',
+      bankName: process.env.BANK_NAME || '',
+      branch: process.env.BANK_BRANCH || '',
+    },
   });
 });
 
 const REQUIRED_FIELDS = [
   'fullName', 'dob', 'gender', 'email', 'mobile',
   'emergencyName', 'emergencyRelationship', 'emergencyNumber',
-  'category', 'tshirtSize', 'upiId', 'signature',
+  'category', 'tshirtSize', 'signature',
 ];
+
+const PAYMENT_METHODS = ['UPI', 'Bank Transfer'];
 
 function validateRegistration(data) {
   for (const field of REQUIRED_FIELDS) {
@@ -47,7 +56,20 @@ function validateRegistration(data) {
   if (!FEES[data.category]) return 'Invalid category selected.';
   if (!/^\S+@\S+\.\S+$/.test(data.email)) return 'Invalid email address.';
   if (!/^[0-9+\-\s]{7,15}$/.test(data.mobile)) return 'Invalid mobile number.';
-  if (!/^[\w.\-]{2,}@[\w.\-]{2,}$/.test(data.upiId)) return 'Invalid UPI ID. It should look like name@bank.';
+
+  if (!PAYMENT_METHODS.includes(data.paymentMethod)) return 'Please choose how you paid.';
+  if (data.paymentMethod === 'Bank Transfer') {
+    if (!data.payerAccountName) return 'Account holder name is required for a bank transfer.';
+    if (!/^\d{6,20}$/.test(String(data.payerAccountNumber || '').replace(/\s/g, ''))) {
+      return 'Invalid account number.';
+    }
+    if (!/^[A-Za-z]{4}0[A-Za-z0-9]{6}$/.test(data.payerIfsc || '')) {
+      return 'Invalid IFSC code. It should look like SBIN0001234.';
+    }
+  } else if (!/^[\w.\-]{2,}@[\w.\-]{2,}$/.test(data.upiId || '')) {
+    return 'Invalid UPI ID. It should look like name@bank.';
+  }
+
   if (data.waiverAccepted !== 'true' && data.waiverAccepted !== true) {
     return 'The participant waiver must be accepted.';
   }
@@ -101,7 +123,11 @@ app.post('/api/register', upload.single('paymentScreenshot'), async (req, res) =
       registration.category,
       registration.tshirtSize,
       FEES[registration.category],
-      registration.upiId,
+      registration.paymentMethod,
+      registration.paymentMethod === 'UPI' ? registration.upiId : '',
+      registration.paymentMethod === 'Bank Transfer' ? registration.payerAccountName : '',
+      registration.paymentMethod === 'Bank Transfer' ? registration.payerAccountNumber : '',
+      registration.paymentMethod === 'Bank Transfer' ? String(registration.payerIfsc).toUpperCase() : '',
       screenshotLink,
       paymentStatus,
       'Yes',

@@ -24,6 +24,7 @@
   let upiPayeeName = 'Unity Run 2026';
   let upiOrgId = '159020';
   let upiMerchantCode = '7800';
+  let bankDetails = null;
 
   function openModal() {
     modal.classList.add('open');
@@ -37,7 +38,9 @@
         if (cfg.upiPayeeName) upiPayeeName = cfg.upiPayeeName;
         if (cfg.upiOrgId) upiOrgId = cfg.upiOrgId;
         if (cfg.upiMerchantCode) upiMerchantCode = cfg.upiMerchantCode;
+        bankDetails = cfg.bankDetails || null;
         renderUpiDetails();
+        renderBankDetails();
       })
       .catch(() => {});
     const dateField = document.getElementById('waiverDate');
@@ -77,6 +80,8 @@
       nextBtn.append(arrow);
       renderSummary();
       renderUpiDetails();
+      renderBankDetails();
+      showPaymentBlocks();
     } else {
       nextBtn.append('Continue ');
       nextBtn.append(arrow);
@@ -126,9 +131,20 @@
       if (!getFieldValue('signature')) return 'Please type your full name as digital consent.';
     }
     if (n === 4) {
-      const upiId = getFieldValue('upiId');
-      if (!upiId) return 'Please enter the UPI ID you paid from.';
-      if (!/^[\w.\-]{2,}@[\w.\-]{2,}$/.test(upiId)) return 'That UPI ID looks incomplete — it should look like name@bank.';
+      const method = getFieldValue('paymentMethod');
+      if (method === 'Bank Transfer') {
+        if (!getFieldValue('payerAccountName')) return 'Please enter the account holder name.';
+        const accountNumber = getFieldValue('payerAccountNumber');
+        if (!accountNumber) return 'Please enter the account number you paid from.';
+        if (!/^\d{6,20}$/.test(accountNumber.replace(/\s/g, ''))) return 'That account number looks incorrect — digits only, 6 to 20 of them.';
+        const ifsc = getFieldValue('payerIfsc');
+        if (!ifsc) return 'Please enter your bank’s IFSC code.';
+        if (!/^[A-Za-z]{4}0[A-Za-z0-9]{6}$/.test(ifsc)) return 'That IFSC code looks incorrect — it should look like SBIN0001234.';
+      } else {
+        const upiId = getFieldValue('upiId');
+        if (!upiId) return 'Please enter the UPI ID you paid from.';
+        if (!/^[\w.\-]{2,}@[\w.\-]{2,}$/.test(upiId)) return 'That UPI ID looks incomplete — it should look like name@bank.';
+      }
       const fileInput = document.getElementById('paymentScreenshot');
       if (!fileInput.files || !fileInput.files[0]) return 'Please upload a screenshot of your UPI payment.';
       if (fileInput.files[0].size > 5 * 1024 * 1024) return 'That screenshot is larger than 5 MB. Please upload a smaller image.';
@@ -151,8 +167,43 @@
       waiverAccepted: getFieldValue('waiverAccepted'),
       signature: getFieldValue('signature'),
       waiverDate: getFieldValue('waiverDate'),
+      paymentMethod: getFieldValue('paymentMethod'),
       upiId: getFieldValue('upiId'),
+      payerAccountName: getFieldValue('payerAccountName'),
+      payerAccountNumber: getFieldValue('payerAccountNumber'),
+      payerIfsc: getFieldValue('payerIfsc'),
     };
+  }
+
+  function renderBankDetails() {
+    const container = document.getElementById('bankDetails');
+    if (!container) return;
+
+    // With nothing configured yet, show every field as "to be confirmed" rather
+    // than an empty box. Once some are filled in, show only those.
+    const configured = bankDetails && Object.values(bankDetails).some((v) => v);
+    const rows = [
+      ['Account name', bankDetails && bankDetails.accountName],
+      ['Account number', bankDetails && bankDetails.accountNumber],
+      ['IFSC code', bankDetails && bankDetails.ifsc],
+      ['Bank', bankDetails && bankDetails.bankName],
+      ['Branch', bankDetails && bankDetails.branch],
+    ].filter(([, value]) => value || !configured);
+
+    container.innerHTML = rows
+      .map(([label, value]) => {
+        const shown = value
+          ? escapeHtml(value)
+          : '<span class="missing">to be confirmed</span>';
+        return `<dt>${label}</dt><dd>${shown}</dd>`;
+      })
+      .join('');
+  }
+
+  function showPaymentBlocks() {
+    const method = getFieldValue('paymentMethod') || 'UPI';
+    document.getElementById('upiBlock').hidden = method !== 'UPI';
+    document.getElementById('bankBlock').hidden = method !== 'Bank Transfer';
   }
 
   function renderUpiDetails() {
@@ -265,6 +316,11 @@
       currentStep -= 1;
       showStep(currentStep);
     }
+  });
+
+  document.getElementById('paymentMethod').addEventListener('change', () => {
+    hideError();
+    showPaymentBlocks();
   });
 
   document.querySelectorAll('.js-open-register').forEach((btn) => {
