@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "node server/index.js",
-    "qr": "node scripts/generate-upi-qr.js"
+    "qr": "node scripts/generate-upi-qr.js",
+    "marketing": "node scripts/generate-marketing.js"
   },
   "license": "UNLICENSED",
   "dependencies": {
@@ -16,6 +17,7 @@
     "multer": "^2.2.0"
   },
   "devDependencies": {
-    "qrcode": "^1.5.4"
+    "qrcode": "^1.5.4",
+    "sharp": "^0.35.3"
   }
 }
