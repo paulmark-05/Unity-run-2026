@@ -8,6 +8,10 @@
  * Every format is written as both SVG (vector, hand to a printer) and PNG
  * (upload straight to Instagram/Facebook). Rerun after the site is deployed
  * so the QR code points at the real registration URL.
+ *
+ * The artwork is built around an illustrated scene: a road curving to a city
+ * horizon with runners receding along it. The runner is the figure from the
+ * event logo, lifted out by colour and reused as a flat silhouette.
  */
 const fs = require('fs');
 const path = require('path');
@@ -20,9 +24,11 @@ const FEE = 499;
 const NAVY = '#1B2260';
 const RED = '#C41E2A';
 const SKY = '#46AEE0';
-const INK = '#14161C';
 const INK_SOFT = '#3C424E';
 const PAPER = '#FFFFFF';
+const CREAM = '#FDF3EA';
+const SKYLINE = '#AEB6DC';
+const ROAD = '#E8EBF3';
 
 const DISPLAY = 'Georgia, serif';
 const SANS = 'Arial, Helvetica, sans-serif';
@@ -33,37 +39,17 @@ const OUT = path.join(__dirname, '..', 'marketing');
 const dataUri = (file, mime) =>
   `data:${mime};base64,${fs.readFileSync(path.join(ASSETS, file)).toString('base64')}`;
 
-// Transparent variant, so the logo sits on the artwork without a white box.
 const runLogo = dataUri('unity-run-logo-transparent.png', 'image/png');
 const zsbLogo = dataUri('zsb-logo.jpg', 'image/jpeg');
-// The running figure lifted out of the logo — used ghosted, as a background
-// element. It is only ~576px wide, so it is never placed as sharp foreground art.
-const runner = dataUri('runner-figure.png', 'image/png');
-const RUNNER_RATIO = 651 / 576;
-
-/** Parallel slanted rules — reads as motion / track lanes. */
-function speedLines(x, y, w, h, { color = '#fff', opacity = 0.5, count = 7, thickness = 3, slant = 0.35 } = {}) {
-  const out = [];
-  const step = h / (count + 1);
-  for (let i = 1; i <= count; i++) {
-    const ly = y + step * i;
-    const len = w * (0.35 + 0.65 * Math.abs(Math.sin(i * 1.7)));
-    out.push(`<path d="M ${x} ${ly} L ${x + len} ${ly - len * slant}" stroke="${color}" stroke-width="${thickness}" opacity="${opacity}" stroke-linecap="round" fill="none"/>`);
-  }
-  return out.join('\n');
-}
-
-/** Big ghosted runner, clipped to the canvas. */
-function ghostRunner(x, y, height, id, opacity = 0.08) {
-  const w = height / RUNNER_RATIO;
-  return `<image href="${runner}" x="${x}" y="${y}" width="${w}" height="${height}" opacity="${opacity}"/>`;
-}
+const runnerNavy = dataUri('runner-navy.png', 'image/png');
+const runnerSky = dataUri('runner-sky.png', 'image/png');
+const RUNNER_RATIO = 651 / 576; // height / width
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 function text(content, x, y, opts = {}) {
   const {
-    size = 16, fill = INK, family = SANS, weight = 400,
+    size = 16, fill = NAVY, family = SANS, weight = 400,
     anchor = 'start', spacing = 0, italic = false,
   } = opts;
   return `<text x="${x}" y="${y}" font-family="${family}" font-size="${size}" fill="${fill}" `
@@ -71,178 +57,197 @@ function text(content, x, y, opts = {}) {
     + `${italic ? ' font-style="italic"' : ''}>${esc(content)}</text>`;
 }
 
+/** A runner standing on the road: x/feetY are absolute, height is in px. */
+function runner(x, feetY, height, image) {
+  const w = height / RUNNER_RATIO;
+  return `<image href="${image}" x="${x - w / 2}" y="${feetY - height}" width="${w}" height="${height}"/>`;
+}
+
+/**
+ * The illustrated band: a pack of runners on a track, receding to the right.
+ * Strictly contained between topY and bottomY so it never collides with type.
+ */
+function scene(w, topY, bottomY, id) {
+  const h = bottomY - topY;
+  const ground = bottomY - h * 0.16; // baseline the runners stand on
+  const p = [];
+
+  p.push(`<defs>
+    <linearGradient id="sky-${id}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${CREAM}" stop-opacity="0"/>
+      <stop offset="100%" stop-color="${CREAM}"/>
+    </linearGradient>
+    <clipPath id="scene-${id}"><rect x="0" y="${topY}" width="${w}" height="${h}"/></clipPath>
+  </defs>`);
+
+  p.push(`<g clip-path="url(#scene-${id})">`);
+  p.push(`<rect x="0" y="${topY}" width="${w}" height="${h}" fill="url(#sky-${id})"/>`);
+
+  // Track: a plain ground plane with a single lane rule. Deliberately sparse —
+  // anything busier competes with the runners.
+  p.push(`<rect x="0" y="${ground}" width="${w}" height="${bottomY - ground}" fill="${ROAD}"/>`);
+  p.push(`<rect x="0" y="${ground}" width="${w}" height="${h * 0.018}" fill="${SKY}" opacity="0.75"/>`);
+
+  // The pack: tallest at the left, receding to the right. Feet on the baseline.
+  const pack = [
+    { x: 0.13, s: 0.86, img: runnerNavy },
+    { x: 0.34, s: 0.68, img: runnerNavy },
+    { x: 0.51, s: 0.54, img: runnerNavy },
+    { x: 0.65, s: 0.42, img: runnerSky },
+    { x: 0.76, s: 0.32, img: runnerSky },
+    { x: 0.85, s: 0.24, img: runnerSky },
+  ];
+  pack.forEach((r) => {
+    p.push(runner(w * r.x, ground + h * 0.01, h * r.s, r.img));
+  });
+
+  p.push(`</g>`);
+  return p.join('\n');
+}
+
 /** Stacked layout — squares, stories, posters. */
 function stacked(w, h, qr) {
   const pad = w * 0.075;
   const cx = w / 2;
-  // Type scales with width, but is held back on tall canvases so a story or a
-  // poster doesn't end up with headline text the size of the logo.
   const u = Math.min(w / 1080, h / 1350);
 
-  // Vertical budget as fractions of the canvas — keeps every format in bounds.
-  const BANDS = { header: 0.155, logo: 0.28, tagline: 0.07, when: 0.17, cats: 0.15, footer: 0.175 };
-  const top = {};
-  let acc = 0;
-  for (const [k, v] of Object.entries(BANDS)) { top[k] = h * acc; acc += v; }
+  const footerH = h * 0.145;
+  const sceneBottom = h - footerH;
+  const sceneTop = sceneBottom - h * 0.20;
 
-  const parts = [
-    `<defs><clipPath id="canvas"><rect width="${w}" height="${h}"/></clipPath></defs>`,
-    `<rect width="${w}" height="${h}" fill="${PAPER}"/>`,
-    `<g clip-path="url(#canvas)">`,
-    // Ghosted runner bleeding off the right edge, kept low in the composition
-    // so it never fights the logo for attention.
-    ghostRunner(w * 0.52, h * 0.30, h * 0.58, 'g1', 0.05),
-    // Track-lane rules sweeping across the upper half
-    speedLines(-w * 0.05, h * 0.06, w * 0.55, h * 0.30, { color: SKY, opacity: 0.35, count: 5, thickness: w * 0.004, slant: 0.30 }),
-    // Diagonal colour wedge anchoring the lower-left corner
-    `<path d="M 0 ${h * 0.56} L ${w * 0.36} ${h} L 0 ${h} Z" fill="${SKY}" opacity="0.12"/>`,
-    `</g>`,
-  ];
+  const parts = [`<rect width="${w}" height="${h}" fill="${PAPER}"/>`];
+  parts.push(scene(w, sceneTop, sceneBottom, 'p'));
 
   // Header — organizer identity
-  const headerH = h * BANDS.header;
-  const zsbH = headerH * 0.52;
+  let y = pad * 0.9;
+  const zsbH = h * 0.072;
   const zsbW = zsbH * (425 / 508);
-  parts.push(`<image href="${zsbLogo}" x="${cx - zsbW / 2}" y="${top.header + headerH * 0.14}" width="${zsbW}" height="${zsbH}"/>`);
-  parts.push(text('ORGANIZED BY ZILA SAINIK BOARD, NORTH 24 PARGANAS', cx, top.header + headerH * 0.88, {
-    size: 20 * u, family: SANS, weight: 700, fill: INK_SOFT, anchor: 'middle', spacing: 3 * u,
+  parts.push(`<image href="${zsbLogo}" x="${cx - zsbW / 2}" y="${y}" width="${zsbW}" height="${zsbH}"/>`);
+  y += zsbH + 26 * u;
+  parts.push(text('ORGANIZED BY ZILA SAINIK BOARD, NORTH 24 PARGANAS', cx, y, {
+    size: 19 * u, family: SANS, weight: 700, fill: INK_SOFT, anchor: 'middle', spacing: 3 * u,
   }));
 
-  // Logo — fitted inside its band
-  const logoBandH = h * BANDS.logo;
-  const logoW = Math.min(w - pad * 2, logoBandH * 0.94 * (1100 / 729));
-  const logoH = logoW * (729 / 1100);
-  parts.push(`<image href="${runLogo}" x="${cx - logoW / 2}" y="${top.logo + (logoBandH - logoH) / 2}" width="${logoW}" height="${logoH}"/>`);
+  // Event logo
+  y += 24 * u;
+  const logoW = Math.min(w - pad * 2, (h * 0.20) * (1100 / 728));
+  const logoH = logoW * (728 / 1100);
+  parts.push(`<image href="${runLogo}" x="${cx - logoW / 2}" y="${y}" width="${logoW}" height="${logoH}"/>`);
+  y += logoH + 40 * u;
 
-  // Tagline
-  const tagH = h * BANDS.tagline;
-  parts.push(`<rect x="${cx - 90 * u}" y="${top.tagline + tagH * 0.16}" width="${180 * u}" height="${5 * u}" fill="${RED}"/>`);
-  parts.push(text('RUN TOGETHER. STAND UNITED.', cx, top.tagline + tagH * 0.86, {
-    size: 38 * u, family: DISPLAY, weight: 700, fill: NAVY, anchor: 'middle',
+  parts.push(`<rect x="${cx - 80 * u}" y="${y}" width="${160 * u}" height="${5 * u}" fill="${RED}"/>`);
+  y += 46 * u;
+  parts.push(text('RUN TOGETHER. STAND UNITED.', cx, y, {
+    size: 36 * u, family: DISPLAY, weight: 700, fill: NAVY, anchor: 'middle',
   }));
 
-  // Date and venue
-  const whenH = h * BANDS.when;
-  parts.push(text('20 SEPTEMBER 2026', cx, top.when + whenH * 0.46, {
-    size: 62 * u, family: DISPLAY, weight: 700, fill: NAVY, anchor: 'middle', spacing: 1 * u,
+  y += 84 * u;
+  parts.push(text('20 SEPTEMBER 2026', cx, y, {
+    size: 58 * u, family: DISPLAY, weight: 700, fill: NAVY, anchor: 'middle',
   }));
-  parts.push(text('BARASAT STADIUM', cx, top.when + whenH * 0.78, {
-    size: 30 * u, family: SANS, weight: 700, fill: INK_SOFT, anchor: 'middle', spacing: 6 * u,
+  y += 44 * u;
+  parts.push(text('BARASAT STADIUM', cx, y, {
+    size: 27 * u, family: SANS, weight: 700, fill: INK_SOFT, anchor: 'middle', spacing: 6 * u,
   }));
 
-  // Category chips
-  const catsH = h * BANDS.cats;
+  // Distance chips
+  y += 44 * u;
   const chips = ['3K', '5K', '10K'];
-  const chipH = Math.min(74 * u, catsH * 0.46);
-  const chipW = chipH * 2.3;
+  const chipH = 64 * u;
+  const chipW = chipH * 2.2;
   const gap = chipW * 0.14;
   const totalW = chips.length * chipW + (chips.length - 1) * gap;
-  const chipY = top.cats + catsH * 0.1;
   chips.forEach((c, i) => {
     const x = cx - totalW / 2 + i * (chipW + gap);
-    parts.push(`<rect x="${x}" y="${chipY}" width="${chipW}" height="${chipH}" fill="none" stroke="${NAVY}" stroke-width="${2.5 * u}"/>`);
-    parts.push(text(c, x + chipW / 2, chipY + chipH * 0.7, {
-      size: chipH * 0.52, family: DISPLAY, weight: 700, fill: NAVY, anchor: 'middle',
+    parts.push(`<rect x="${x}" y="${y}" width="${chipW}" height="${chipH}" fill="${PAPER}" stroke="${NAVY}" stroke-width="${2.5 * u}"/>`);
+    parts.push(text(c, x + chipW / 2, y + chipH * 0.7, {
+      size: chipH * 0.5, family: DISPLAY, weight: 700, fill: NAVY, anchor: 'middle',
     }));
   });
-  parts.push(text('FUN RUN  ·  TIMED RUNS  ·  OPEN TO ALL AGES', cx, chipY + chipH + catsH * 0.28, {
-    size: 21 * u, family: SANS, weight: 700, fill: INK_SOFT, anchor: 'middle', spacing: 3 * u,
-  }));
 
   // Footer band
-  const bandH = h * BANDS.footer;
-  const bandY = h - bandH;
-  const qrSize = bandH * 0.66;
-  // Angled top edge gives the band some momentum rather than sitting as a slab.
-  parts.push(`<path d="M 0 ${bandY + bandH * 0.16} L ${w} ${bandY} L ${w} ${h} L 0 ${h} Z" fill="${NAVY}"/>`);
-  parts.push(`<path d="M 0 ${bandY + bandH * 0.16} L ${w} ${bandY} L ${w} ${bandY + 7 * u} L 0 ${bandY + bandH * 0.16 + 7 * u} Z" fill="${RED}"/>`);
-  parts.push(`<g clip-path="url(#canvas)">${speedLines(w * 0.30, bandY + bandH * 0.12, w * 0.42, bandH * 0.8, { color: SKY, opacity: 0.30, count: 5, thickness: w * 0.0035, slant: 0.25 })}</g>`);
-  parts.push(`<rect x="${w - pad - qrSize}" y="${bandY + (bandH - qrSize) / 2}" width="${qrSize}" height="${qrSize}" fill="#fff"/>`);
-  parts.push(`<image href="${qr}" x="${w - pad - qrSize + 6 * u}" y="${bandY + (bandH - qrSize) / 2 + 6 * u}" width="${qrSize - 12 * u}" height="${qrSize - 12 * u}"/>`);
+  const bandY = h - footerH;
+  const qrSize = footerH * 0.72;
+  parts.push(`<rect x="0" y="${bandY}" width="${w}" height="${footerH}" fill="${NAVY}"/>`);
+  parts.push(`<rect x="0" y="${bandY}" width="${w}" height="${6 * u}" fill="${RED}"/>`);
+  parts.push(`<rect x="${w - pad - qrSize}" y="${bandY + (footerH - qrSize) / 2}" width="${qrSize}" height="${qrSize}" fill="#fff"/>`);
+  parts.push(`<image href="${qr}" x="${w - pad - qrSize + 5 * u}" y="${bandY + (footerH - qrSize) / 2 + 5 * u}" width="${qrSize - 10 * u}" height="${qrSize - 10 * u}"/>`);
 
-  parts.push(text('REGISTER NOW', pad, bandY + bandH * 0.42, {
-    size: 44 * u, family: DISPLAY, weight: 700, fill: '#fff',
+  parts.push(text('REGISTER NOW', pad, bandY + footerH * 0.44, {
+    size: 42 * u, family: DISPLAY, weight: 700, fill: '#fff',
   }));
-  parts.push(text(`ENTRY ₹${FEE}   ·   SCAN TO REGISTER`, pad, bandY + bandH * 0.64, {
-    size: 22 * u, family: SANS, weight: 700, fill: SKY, spacing: 2 * u,
+  parts.push(text(`ENTRY ₹${FEE}   ·   SCAN TO REGISTER`, pad, bandY + footerH * 0.68, {
+    size: 21 * u, family: SANS, weight: 700, fill: SKY, spacing: 2 * u,
   }));
-  parts.push(text(REGISTER_URL.replace(/^https?:\/\//, ''), pad, bandY + bandH * 0.84, {
-    size: 20 * u, family: SANS, weight: 400, fill: '#C9D2E8',
+  parts.push(text(REGISTER_URL.replace(/^https?:\/\//, ''), pad, bandY + footerH * 0.88, {
+    size: 18 * u, family: SANS, fill: '#C9D2E8',
   }));
 
   return parts.join('\n');
 }
 
-/** Split layout — Meta ads, website banners, flex banners. */
+/** Full-bleed scene with details overlaid — ads, website and flex banners. */
 function landscape(w, h, qr) {
   const u = h / 628;
-  const pad = h * 0.09;
-  const leftW = w * 0.42;
+  const pad = w * 0.045;
+  const footerH = h * 0.155;
 
-  const parts = [
-    `<defs><clipPath id="canvasL"><rect width="${w}" height="${h}"/></clipPath></defs>`,
-    `<rect width="${w}" height="${h}" fill="${PAPER}"/>`,
-    `<g clip-path="url(#canvasL)">`,
-    // Ghosted runner behind the details column
-    ghostRunner(w * 0.60, -h * 0.06, h * 1.08, 'g2', 0.07),
-    // Motion rules behind the logo panel
-    speedLines(-w * 0.02, h * 0.10, leftW * 0.9, h * 0.8, { color: SKY, opacity: 0.30, count: 6, thickness: h * 0.006, slant: 0.30 }),
-    // Navy corner wedge with lanes, bottom right
-    `<path d="M ${w} ${h * 0.55} L ${w} ${h} L ${w * 0.55} ${h} Z" fill="${NAVY}" opacity="0.07"/>`,
-    `</g>`,
-    // Divider between logo panel and details
-    `<rect x="${leftW - 5 * u}" y="0" width="${5 * u}" height="${h}" fill="${RED}"/>`,
-  ];
-  const logoW = leftW * 0.78;
-  const logoH = logoW * (729 / 1100);
-  parts.push(`<image href="${runLogo}" x="${(leftW - logoW) / 2}" y="${(h - logoH) / 2}" width="${logoW}" height="${logoH}"/>`);
+  const parts = [`<rect width="${w}" height="${h}" fill="${PAPER}"/>`];
+  // Runner band sits in the lower portion only — type lives above it.
+  parts.push(scene(w, h * 0.38, h - footerH, 'l'));
 
-  // Right: details
-  const rx = leftW + pad;
-  let y = pad + 40 * u;
+  // Event logo, upper left — height-capped so it can't push the details
+  // block down into the runner band.
+  const topZone = h * 0.46;
+  const logoH = Math.min(topZone * 0.62, w * 0.20 * (728 / 1100));
+  const logoW = logoH * (1100 / 728);
+  parts.push(`<image href="${runLogo}" x="${pad}" y="${h * 0.06}" width="${logoW}" height="${logoH}"/>`);
 
-  const zsbW = 62 * u;
-  parts.push(`<image href="${zsbLogo}" x="${rx}" y="${y - 46 * u}" width="${zsbW}" height="${zsbW * (508 / 425)}"/>`);
-  parts.push(text('ORGANIZED BY ZILA SAINIK BOARD', rx + zsbW + 16 * u, y - 14 * u, {
-    size: 15 * u, family: SANS, weight: 700, fill: INK_SOFT, spacing: 2 * u,
+  // Organizer, upper right
+  const zsbH = h * 0.13;
+  const zsbW = zsbH * (425 / 508);
+  parts.push(`<image href="${zsbLogo}" x="${w - pad - zsbW}" y="${h * 0.07}" width="${zsbW}" height="${zsbH}"/>`);
+  parts.push(text('ORGANIZED BY', w - pad - zsbW - 14 * u, h * 0.07 + zsbH * 0.42, {
+    size: 15 * u, family: SANS, weight: 700, fill: INK_SOFT, anchor: 'end', spacing: 2 * u,
   }));
-  parts.push(text('NORTH 24 PARGANAS', rx + zsbW + 16 * u, y + 8 * u, {
-    size: 15 * u, family: SANS, weight: 700, fill: INK_SOFT, spacing: 2 * u,
+  parts.push(text('ZILA SAINIK BOARD, N24 PGS', w - pad - zsbW - 14 * u, h * 0.07 + zsbH * 0.72, {
+    size: 15 * u, family: SANS, weight: 700, fill: NAVY, anchor: 'end', spacing: 1 * u,
   }));
 
-  y += 92 * u;
-  parts.push(text('Run together.', rx, y, { size: 54 * u, family: DISPLAY, weight: 700, fill: NAVY }));
-  y += 58 * u;
-  parts.push(text('Stand united.', rx, y, { size: 54 * u, family: DISPLAY, weight: 700, fill: RED, italic: true }));
-
-  y += 62 * u;
-  parts.push(text('20 SEPTEMBER 2026  ·  BARASAT STADIUM', rx, y, {
-    size: 22 * u, family: SANS, weight: 700, fill: INK, spacing: 2 * u,
+  // Details sit beside the logo, keeping the whole block clear of the runners
+  const dx = pad + logoW + w * 0.05;
+  let y = h * 0.06 + logoH * 0.42;
+  parts.push(text('RUN TOGETHER. STAND UNITED.', dx, y, {
+    size: 24 * u, family: SANS, weight: 700, fill: RED, spacing: 3 * u,
   }));
-  y += 40 * u;
-  parts.push(text('3K  ·  5K  ·  10K', rx, y, {
+  y += 52 * u;
+  parts.push(text('20 SEPTEMBER 2026', dx, y, {
+    size: 48 * u, family: DISPLAY, weight: 700, fill: NAVY,
+  }));
+  y += 36 * u;
+  parts.push(text('BARASAT STADIUM  ·  3K · 5K · 10K', dx, y, {
     size: 22 * u, family: SANS, weight: 700, fill: INK_SOFT, spacing: 2 * u,
   }));
-  parts.push(text(`ENTRY ₹${FEE}`, rx + 230 * u, y, {
-    size: 22 * u, family: SANS, weight: 700, fill: RED, spacing: 2 * u,
+  y += 32 * u;
+  parts.push(text(`ENTRY ₹${FEE}`, dx, y, {
+    size: 23 * u, family: SANS, weight: 700, fill: RED, spacing: 2 * u,
   }));
 
-  // CTA + QR
-  const btnH = 76 * u;
-  const btnW = 300 * u;
-  const btnY = h - pad - btnH;
-  parts.push(`<rect x="${rx}" y="${btnY}" width="${btnW}" height="${btnH}" fill="${RED}"/>`);
-  parts.push(text('REGISTER NOW', rx + btnW / 2, btnY + btnH * 0.63, {
-    size: 26 * u, family: SANS, weight: 700, fill: '#fff', anchor: 'middle', spacing: 3 * u,
+  // Footer band
+  const bandY = h - footerH;
+  const qrSize = footerH * 0.74;
+  parts.push(`<rect x="0" y="${bandY}" width="${w}" height="${footerH}" fill="${NAVY}"/>`);
+  parts.push(`<rect x="0" y="${bandY}" width="${w}" height="${5 * u}" fill="${RED}"/>`);
+  parts.push(text('REGISTER NOW', pad, bandY + footerH * 0.48, {
+    size: 40 * u, family: DISPLAY, weight: 700, fill: '#fff',
   }));
-
-  const qrSize = btnH * 1.35;
-  parts.push(`<image href="${qr}" x="${rx + btnW + 28 * u}" y="${btnY + btnH - qrSize}" width="${qrSize}" height="${qrSize}"/>`);
-  parts.push(text('SCAN TO', rx + btnW + 28 * u + qrSize + 16 * u, btnY + btnH - qrSize * 0.55, {
-    size: 17 * u, family: SANS, weight: 700, fill: INK_SOFT, spacing: 2 * u,
+  parts.push(text(REGISTER_URL.replace(/^https?:\/\//, ''), pad, bandY + footerH * 0.78, {
+    size: 19 * u, family: SANS, weight: 700, fill: SKY, spacing: 1 * u,
   }));
-  parts.push(text('REGISTER', rx + btnW + 28 * u + qrSize + 16 * u, btnY + btnH - qrSize * 0.25, {
-    size: 17 * u, family: SANS, weight: 700, fill: INK_SOFT, spacing: 2 * u,
+  parts.push(`<rect x="${w - pad - qrSize}" y="${bandY + (footerH - qrSize) / 2}" width="${qrSize}" height="${qrSize}" fill="#fff"/>`);
+  parts.push(`<image href="${qr}" x="${w - pad - qrSize + 5 * u}" y="${bandY + (footerH - qrSize) / 2 + 5 * u}" width="${qrSize - 10 * u}" height="${qrSize - 10 * u}"/>`);
+  parts.push(text('SCAN TO REGISTER', w - pad - qrSize - 16 * u, bandY + footerH * 0.62, {
+    size: 18 * u, family: SANS, weight: 700, fill: '#C9D2E8', anchor: 'end', spacing: 2 * u,
   }));
 
   return parts.join('\n');
