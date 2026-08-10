@@ -33,8 +33,31 @@ const OUT = path.join(__dirname, '..', 'marketing');
 const dataUri = (file, mime) =>
   `data:${mime};base64,${fs.readFileSync(path.join(ASSETS, file)).toString('base64')}`;
 
-const runLogo = dataUri('unity-run-logo.jpg', 'image/jpeg');
+// Transparent variant, so the logo sits on the artwork without a white box.
+const runLogo = dataUri('unity-run-logo-transparent.png', 'image/png');
 const zsbLogo = dataUri('zsb-logo.jpg', 'image/jpeg');
+// The running figure lifted out of the logo — used ghosted, as a background
+// element. It is only ~576px wide, so it is never placed as sharp foreground art.
+const runner = dataUri('runner-figure.png', 'image/png');
+const RUNNER_RATIO = 651 / 576;
+
+/** Parallel slanted rules — reads as motion / track lanes. */
+function speedLines(x, y, w, h, { color = '#fff', opacity = 0.5, count = 7, thickness = 3, slant = 0.35 } = {}) {
+  const out = [];
+  const step = h / (count + 1);
+  for (let i = 1; i <= count; i++) {
+    const ly = y + step * i;
+    const len = w * (0.35 + 0.65 * Math.abs(Math.sin(i * 1.7)));
+    out.push(`<path d="M ${x} ${ly} L ${x + len} ${ly - len * slant}" stroke="${color}" stroke-width="${thickness}" opacity="${opacity}" stroke-linecap="round" fill="none"/>`);
+  }
+  return out.join('\n');
+}
+
+/** Big ghosted runner, clipped to the canvas. */
+function ghostRunner(x, y, height, id, opacity = 0.08) {
+  const w = height / RUNNER_RATIO;
+  return `<image href="${runner}" x="${x}" y="${y}" width="${w}" height="${height}" opacity="${opacity}"/>`;
+}
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -62,7 +85,19 @@ function stacked(w, h, qr) {
   let acc = 0;
   for (const [k, v] of Object.entries(BANDS)) { top[k] = h * acc; acc += v; }
 
-  const parts = [`<rect width="${w}" height="${h}" fill="${PAPER}"/>`];
+  const parts = [
+    `<defs><clipPath id="canvas"><rect width="${w}" height="${h}"/></clipPath></defs>`,
+    `<rect width="${w}" height="${h}" fill="${PAPER}"/>`,
+    `<g clip-path="url(#canvas)">`,
+    // Ghosted runner bleeding off the right edge, kept low in the composition
+    // so it never fights the logo for attention.
+    ghostRunner(w * 0.52, h * 0.30, h * 0.58, 'g1', 0.05),
+    // Track-lane rules sweeping across the upper half
+    speedLines(-w * 0.05, h * 0.06, w * 0.55, h * 0.30, { color: SKY, opacity: 0.35, count: 5, thickness: w * 0.004, slant: 0.30 }),
+    // Diagonal colour wedge anchoring the lower-left corner
+    `<path d="M 0 ${h * 0.56} L ${w * 0.36} ${h} L 0 ${h} Z" fill="${SKY}" opacity="0.12"/>`,
+    `</g>`,
+  ];
 
   // Header — organizer identity
   const headerH = h * BANDS.header;
@@ -118,8 +153,10 @@ function stacked(w, h, qr) {
   const bandH = h * BANDS.footer;
   const bandY = h - bandH;
   const qrSize = bandH * 0.66;
-  parts.push(`<rect x="0" y="${bandY}" width="${w}" height="${bandH}" fill="${NAVY}"/>`);
-  parts.push(`<rect x="0" y="${bandY}" width="${w}" height="${6 * u}" fill="${RED}"/>`);
+  // Angled top edge gives the band some momentum rather than sitting as a slab.
+  parts.push(`<path d="M 0 ${bandY + bandH * 0.16} L ${w} ${bandY} L ${w} ${h} L 0 ${h} Z" fill="${NAVY}"/>`);
+  parts.push(`<path d="M 0 ${bandY + bandH * 0.16} L ${w} ${bandY} L ${w} ${bandY + 7 * u} L 0 ${bandY + bandH * 0.16 + 7 * u} Z" fill="${RED}"/>`);
+  parts.push(`<g clip-path="url(#canvas)">${speedLines(w * 0.30, bandY + bandH * 0.12, w * 0.42, bandH * 0.8, { color: SKY, opacity: 0.30, count: 5, thickness: w * 0.0035, slant: 0.25 })}</g>`);
   parts.push(`<rect x="${w - pad - qrSize}" y="${bandY + (bandH - qrSize) / 2}" width="${qrSize}" height="${qrSize}" fill="#fff"/>`);
   parts.push(`<image href="${qr}" x="${w - pad - qrSize + 6 * u}" y="${bandY + (bandH - qrSize) / 2 + 6 * u}" width="${qrSize - 12 * u}" height="${qrSize - 12 * u}"/>`);
 
@@ -140,12 +177,22 @@ function stacked(w, h, qr) {
 function landscape(w, h, qr) {
   const u = h / 628;
   const pad = h * 0.09;
-  const parts = [`<rect width="${w}" height="${h}" fill="${PAPER}"/>`];
-
-  // Left: the logo panel. Kept white — the logo artwork has a white background,
-  // so any tint would show as a box around it.
   const leftW = w * 0.42;
-  parts.push(`<rect x="${leftW - 5 * u}" y="0" width="${5 * u}" height="${h}" fill="${RED}"/>`);
+
+  const parts = [
+    `<defs><clipPath id="canvasL"><rect width="${w}" height="${h}"/></clipPath></defs>`,
+    `<rect width="${w}" height="${h}" fill="${PAPER}"/>`,
+    `<g clip-path="url(#canvasL)">`,
+    // Ghosted runner behind the details column
+    ghostRunner(w * 0.60, -h * 0.06, h * 1.08, 'g2', 0.07),
+    // Motion rules behind the logo panel
+    speedLines(-w * 0.02, h * 0.10, leftW * 0.9, h * 0.8, { color: SKY, opacity: 0.30, count: 6, thickness: h * 0.006, slant: 0.30 }),
+    // Navy corner wedge with lanes, bottom right
+    `<path d="M ${w} ${h * 0.55} L ${w} ${h} L ${w * 0.55} ${h} Z" fill="${NAVY}" opacity="0.07"/>`,
+    `</g>`,
+    // Divider between logo panel and details
+    `<rect x="${leftW - 5 * u}" y="0" width="${5 * u}" height="${h}" fill="${RED}"/>`,
+  ];
   const logoW = leftW * 0.78;
   const logoH = logoW * (729 / 1100);
   parts.push(`<image href="${runLogo}" x="${(leftW - logoW) / 2}" y="${(h - logoH) / 2}" width="${logoW}" height="${logoH}"/>`);
