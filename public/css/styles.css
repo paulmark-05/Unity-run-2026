@@ -179,6 +179,15 @@ h2.section-title { font-size: clamp(1.8rem, 3.2vw, 2.4rem); line-height: 1.1; ma
 .d-item h3 { font-size: 1.4rem; margin: 12px 0 10px; color: var(--navy); }
 .d-item p { color: var(--ink-soft); line-height: 1.65; font-size: 0.93rem; }
 
+/* ---------- PRIZES ---------- */
+.prize-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 32px; }
+.prize { border: 1px solid var(--line); border-top: 3px solid var(--navy); padding: 22px 24px 20px; }
+.prize-cat { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--red); margin-bottom: 14px; }
+.prize-row { display: flex; justify-content: space-between; align-items: baseline; padding: 9px 0; border-bottom: 1px dashed var(--line); font-size: 0.92rem; color: var(--ink-soft); }
+.prize-row:last-of-type { border-bottom: none; }
+.prize-row .amt { font-family: Arial, system-ui, sans-serif; font-weight: 700; font-size: 1.15rem; color: var(--navy); }
+.prize-note { margin-top: 10px; font-size: 0.86rem; color: var(--ink-soft); line-height: 1.5; }
+
 /* ---------- CTA BAND ---------- */
 .cta-band { background: var(--paper); color: var(--ink); padding: 52px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .cta-band .row { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
@@ -449,6 +458,7 @@ footer.site { background: var(--paper); color: var(--ink-soft); padding: 44px 0;
   .cat { border-right: none; border-bottom: 1px solid var(--line); }
   .about-grid { grid-template-columns: 1fr; gap: 32px; }
   .details-grid { grid-template-columns: 1fr; gap: 32px; }
+  .prize-grid { grid-template-columns: 1fr; gap: 18px; }
   nav.links { display: none; }
   .f-row, .f-row.three { grid-template-columns: 1fr; }
   .org-text { display: none; }

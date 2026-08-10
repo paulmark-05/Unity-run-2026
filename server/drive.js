@@ -8,7 +8,7 @@
  * See scripts/apps-script-upload.gs.
  */
 
-async function uploadPaymentScreenshot(file, registrationId) {
+async function callAppsScript(payload) {
   const endpoint = process.env.APPS_SCRIPT_UPLOAD_URL;
   const secret = process.env.APPS_SCRIPT_SECRET;
 
@@ -16,32 +16,40 @@ async function uploadPaymentScreenshot(file, registrationId) {
     throw new Error('APPS_SCRIPT_UPLOAD_URL / APPS_SCRIPT_SECRET are not set');
   }
 
-  const extension = (file.originalname.match(/\.[a-zA-Z0-9]+$/) || ['.png'])[0];
-
   const res = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      secret,
-      filename: `${registrationId}${extension}`,
-      mimeType: file.mimetype,
-      data: file.buffer.toString('base64'),
-    }),
+    body: JSON.stringify({ secret, ...payload }),
   });
 
   if (!res.ok) {
-    throw new Error(`Upload endpoint returned ${res.status}`);
+    throw new Error(`Apps Script endpoint returned ${res.status}`);
   }
 
   const result = await res.json();
   if (result.error) {
     throw new Error(result.error);
   }
+  return result;
+}
+
+async function uploadPaymentScreenshot(file, registrationId) {
+  const extension = (file.originalname.match(/\.[a-zA-Z0-9]+$/) || ['.png'])[0];
+  const result = await callAppsScript({
+    action: 'upload',
+    filename: `${registrationId}${extension}`,
+    mimeType: file.mimetype,
+    data: file.buffer.toString('base64'),
+  });
   if (!result.url) {
     throw new Error('Upload endpoint did not return a file URL');
   }
-
   return result.url;
 }
 
-module.exports = { uploadPaymentScreenshot };
+/** Sends mail as the organizer's own Gmail account, via the same Apps Script. */
+async function sendMail({ to, subject, body }) {
+  await callAppsScript({ action: 'sendMail', to, subject, body });
+}
+
+module.exports = { uploadPaymentScreenshot, sendMail };

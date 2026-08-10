@@ -25,4 +25,16 @@ async function appendRegistration(row) {
   });
 }
 
-module.exports = { appendRegistration };
+/** Registrations recorded so far, excluding the header row. */
+async function countRegistrations() {
+  const auth = getAuth();
+  const sheets = google.sheets({ version: 'v4', auth });
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: process.env.GOOGLE_SHEET_ID,
+    range: `${SHEET_TAB}!A:A`,
+  });
+  const rows = res.data.values || [];
+  return Math.max(0, rows.length - 1);
+}
+
+module.exports = { appendRegistration, countRegistrations };

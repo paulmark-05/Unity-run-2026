@@ -19,7 +19,7 @@
   ];
 
   let currentStep = 1;
-  let fees = { '3K': 499, '5K': 499, '10K': 499 };
+  let fees = { '10K': 500, '6K': 500, '4K': 350 };
   let upiVpa = null;
   let upiPayeeName = 'Unity Run 2026';
   let upiOrgId = '159020';
@@ -39,6 +39,7 @@
         if (cfg.upiOrgId) upiOrgId = cfg.upiOrgId;
         if (cfg.upiMerchantCode) upiMerchantCode = cfg.upiMerchantCode;
         bankDetails = cfg.bankDetails || null;
+        applyRegistrationStatus(cfg.registration);
         renderUpiDetails();
         renderBankDetails();
       })
@@ -214,6 +215,32 @@
     document.getElementById('bankBlock').hidden = method !== 'Bank Transfer';
   }
 
+  /** Closes the form when the field is full or the entry window has passed. */
+  function applyRegistrationStatus(status) {
+    if (!status) return;
+
+    const placesLeft = document.getElementById('placesLeft');
+    if (placesLeft && status.count !== null && status.open) {
+      const remaining = Math.max(0, status.cap - status.count);
+      placesLeft.textContent = `Entries close ${status.closesOn} · ${remaining} of ${status.cap} places left`;
+    }
+
+    if (status.open) return;
+
+    const message = status.closedByCap
+      ? `Registration is full — all ${status.cap} places have been taken.`
+      : `Registration closed on ${status.closesOn}.`;
+
+    formBodyForm.style.display = 'none';
+    formFooter.style.display = 'none';
+    showError(message);
+    if (placesLeft) placesLeft.textContent = message;
+    document.querySelectorAll('.js-open-register').forEach((btn) => {
+      btn.disabled = true;
+      btn.title = message;
+    });
+  }
+
   function renderUpiDetails() {
     const link = document.getElementById('upiLink');
     const vpaLine = document.getElementById('upiVpaLine');
@@ -226,7 +253,13 @@
       return;
     }
     const category = getFieldValue('category');
-    const amount = fees[category] || 499;
+    const amount = fees[category] || 500;
+
+    // Each fee has its own QR with that amount pre-filled.
+    const qrImage = document.querySelector('.upi-qr img');
+    if (qrImage) qrImage.src = `assets/upi-qr-${amount}.png`;
+    const qrAmount = document.getElementById('upiQrAmount');
+    if (qrAmount) qrAmount.textContent = `₹${amount}`;
     // Mirrors the bank QR's parameters so UPI apps treat it as the same merchant.
     const params = new URLSearchParams({
       ver: '01',
@@ -259,7 +292,7 @@
     summaryList.innerHTML = rows
       .map(([k, v]) => `<li><span>${k}</span><span>${escapeHtml(v || '—')}</span></li>`)
       .join('');
-    const fee = fees[data.category] || 499;
+    const fee = fees[data.category] || 500;
     feeAmount.textContent = `₹${fee}`;
   }
 
@@ -294,6 +327,10 @@
       if (!res.ok) throw new Error(data.error || 'Registration could not be completed.');
 
       document.getElementById('successBib').textContent = data.registrationId;
+      const seq = document.getElementById('successSeq');
+      if (seq && data.sequenceNo) {
+        seq.textContent = `You are participant no. ${data.sequenceNo} of 300.`;
+      }
       formBodyForm.style.display = 'none';
       formFooter.style.display = 'none';
       successView.style.display = 'block';

@@ -22,7 +22,8 @@ const QRCode = require('qrcode');
 const sharp = require('sharp');
 
 const REGISTER_URL = process.argv[2] || 'https://unity-run-2026.onrender.com';
-const FEE = 499;
+const FEE_RUN = 500;
+const FEE_WALK = 350;
 
 const NAVY = '#1B2260';
 const RED = '#C41E2A';
@@ -93,7 +94,7 @@ function actionBar(w, h, barY, barH, qr, u) {
   p.push(text('REGISTER NOW', pad, barY + barH * 0.45, {
     size: 40 * u, family: DISPLAY, weight: 700, fill: PAPER,
   }));
-  p.push(text(`ENTRY ₹${FEE}   ·   ${REGISTER_URL.replace(/^https?:\/\//, '')}`, pad, barY + barH * 0.75, {
+  p.push(text(`ENTRY ₹${FEE_RUN} RUN · ₹${FEE_WALK} WALK   ·   ${REGISTER_URL.replace(/^https?:\/\//, '')}`, pad, barY + barH * 0.75, {
     size: 19 * u, weight: 700, fill: SKY, spacing: 1.5 * u,
   }));
 
@@ -141,7 +142,7 @@ function landscape(w, h, qr, photo) {
     size: 26 * u, weight: 700, fill: PAPER, spacing: 4 * u,
   }));
   y += 44 * u;
-  p.push(text('3K  ·  5K  ·  10K', pad, y, {
+  p.push(text('10K RUN  ·  6K RUN  ·  4K WALK', pad, y, {
     size: 26 * u, weight: 700, fill: SKY, spacing: 4 * u,
   }));
 
@@ -187,7 +188,7 @@ function stacked(w, h, qr, photo) {
 
   // Distance chips
   y += 56 * u;
-  const chips = ['3K', '5K', '10K'];
+  const chips = ['10K', '6K', '4K'];
   const chipH = 66 * u;
   const chipW = chipH * 2.2;
   const gap = chipW * 0.14;
