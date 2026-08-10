@@ -12,7 +12,8 @@ Event website and registration system for Unity Run 2026 — Barasat Stadium, 20
 
 ```
 public/          static site (HTML/CSS/JS) served directly
-server/          Express backend (Razorpay orders, payment verification, Sheets write)
+server/          Express backend (registration validation, Sheets write, screenshot upload)
+scripts/         QR generator and the Apps Script to deploy for uploads
 ```
 
 ## Local setup
@@ -39,7 +40,7 @@ Runners choose between UPI and bank transfer on the last step of the form.
 
 ### 2. Google Sheet (where registrations land)
 1. Create a new Google Sheet. Add a header row to the first tab, e.g.:
-   `Timestamp | Registration ID | Full Name | DOB | Gender | Email | Mobile | Emergency Name | Emergency Relationship | Emergency Number | Category | T-Shirt Size | Fee | Payment Method | Payer UPI ID | Payer Account Name | Payer Account Number | Payer IFSC | Payment Screenshot | Payment Status | Waiver Accepted | Signature`
+   `Timestamp | Registration ID | Full Name | DOB | Gender | Email | Mobile | Emergency Name | Emergency Relationship | Emergency Number | Category | T-Shirt Size | Fee | Payment Method | Transaction Ref / UTR | Payer UPI ID | Payer Account Name | Payer Account Number | Payer IFSC | Payment Screenshot | Payment Status | Waiver Accepted | Signature`
 2. In [Google Cloud Console](https://console.cloud.google.com/), create a project (or use an existing one), enable the **Google Sheets API**, and create a **Service Account**.
 3. Create a JSON key for that service account and download it.
 4. Share your Google Sheet with the service account's email address (found inside the JSON, field `client_email`) — give it **Editor** access.
@@ -53,7 +54,7 @@ Apps Script web app runs inside the organizer's own account and saves the files 
 
 1. In Google Drive, create a folder, e.g. **Unity Run 2026 — Payment Screenshots**, and copy its ID from the URL into `GOOGLE_DRIVE_FOLDER_ID`.
 2. Go to [script.google.com](https://script.google.com) → **New project**.
-3. Paste in the contents of [`scripts/apps-script-upload.gs`](scripts/apps-script-upload.gs) (the folder ID and shared secret are already filled in).
+3. Paste in the contents of [`scripts/apps-script-upload.gs`](scripts/apps-script-upload.gs), then fill in `FOLDER_ID` and `SHARED_SECRET` at the top — they are placeholders so no credential is committed.
 4. **Deploy → New deployment → Web app**, with **Execute as: Me** and **Who has access: Anyone**, then **Deploy** and authorize it.
 5. Copy the deployment's `/exec` URL into `APPS_SCRIPT_UPLOAD_URL`, and make sure `APPS_SCRIPT_SECRET` matches the secret in the script.
 
@@ -68,6 +69,6 @@ The endpoint is unauthenticated by URL, so the shared secret is what stops stran
 
 ## Notes
 - Entry fee is currently a flat ₹499 for all categories — change the `FEES` object in `server/index.js` if categories should have different prices.
-- Payment is **not** automatically verified. Every registration lands in the sheet as `Pending verification`; an organizer opens the linked screenshot, checks it against the UPI ID, and updates that cell. Budget time for this before the event.
+- Payment is **not** automatically verified. Every registration lands in the sheet as `Pending verification`; an organizer opens the linked screenshot, matches the transaction reference against the bank/UPI statement, and updates that cell. Budget time for this before the event.
 - Screenshot uploads are capped at 5 MB and must be image files.
 - The "tap to pay" QR link uses a `upi://` deep link, which only opens an app on mobile devices. On desktop, runners scan the QR with their phone instead.

@@ -292,9 +292,16 @@
               </div>
             </div>
 
-            <div class="f-group">
-              <label class="f-label" for="upiId">Your UPI ID (the one you paid from)</label>
-              <input class="f-input" id="upiId" name="upiId" placeholder="yourname@bank" />
+            <div class="f-row">
+              <div class="f-group">
+                <label class="f-label" for="upiId">Your UPI ID (the one you paid from)</label>
+                <input class="f-input" id="upiId" name="upiId" placeholder="yourname@bank" />
+              </div>
+              <div class="f-group">
+                <label class="f-label" for="upiTxnRef">UPI transaction ID</label>
+                <input class="f-input" id="upiTxnRef" name="upiTxnRef" placeholder="12-digit reference" />
+                <div class="f-hint sans">Shown on your payment confirmation as "UPI transaction ID" or "UTR".</div>
+              </div>
             </div>
           </div>
 
@@ -320,6 +327,11 @@
                 <label class="f-label" for="payerIfsc">Your IFSC code</label>
                 <input class="f-input" id="payerIfsc" name="payerIfsc" placeholder="e.g. SBIN0001234" />
               </div>
+            </div>
+            <div class="f-group">
+              <label class="f-label" for="bankUtr">UTR / transaction reference number</label>
+              <input class="f-input" id="bankUtr" name="bankUtr" placeholder="e.g. SBIN123456789012" />
+              <div class="f-hint sans">On your transfer receipt or statement, usually labelled "UTR", "RRN" or "reference number".</div>
             </div>
           </div>
 

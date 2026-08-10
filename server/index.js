@@ -66,8 +66,16 @@ function validateRegistration(data) {
     if (!/^[A-Za-z]{4}0[A-Za-z0-9]{6}$/.test(data.payerIfsc || '')) {
       return 'Invalid IFSC code. It should look like SBIN0001234.';
     }
-  } else if (!/^[\w.\-]{2,}@[\w.\-]{2,}$/.test(data.upiId || '')) {
-    return 'Invalid UPI ID. It should look like name@bank.';
+    if (!/^[A-Za-z0-9]{6,30}$/.test(data.bankUtr || '')) {
+      return 'Invalid UTR / reference number.';
+    }
+  } else {
+    if (!/^[\w.\-]{2,}@[\w.\-]{2,}$/.test(data.upiId || '')) {
+      return 'Invalid UPI ID. It should look like name@bank.';
+    }
+    if (!/^[A-Za-z0-9]{6,30}$/.test(data.upiTxnRef || '')) {
+      return 'Invalid UPI transaction ID.';
+    }
   }
 
   if (data.waiverAccepted !== 'true' && data.waiverAccepted !== true) {
@@ -124,6 +132,8 @@ app.post('/api/register', upload.single('paymentScreenshot'), async (req, res) =
       registration.tshirtSize,
       FEES[registration.category],
       registration.paymentMethod,
+      // One reference column: the UPI transaction ID or the bank UTR, whichever applies.
+      (registration.paymentMethod === 'UPI' ? registration.upiTxnRef : registration.bankUtr || '').toUpperCase(),
       registration.paymentMethod === 'UPI' ? registration.upiId : '',
       registration.paymentMethod === 'Bank Transfer' ? registration.payerAccountName : '',
       registration.paymentMethod === 'Bank Transfer' ? registration.payerAccountNumber : '',

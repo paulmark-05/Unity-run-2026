@@ -140,10 +140,16 @@
         const ifsc = getFieldValue('payerIfsc');
         if (!ifsc) return 'Please enter your bank’s IFSC code.';
         if (!/^[A-Za-z]{4}0[A-Za-z0-9]{6}$/.test(ifsc)) return 'That IFSC code looks incorrect — it should look like SBIN0001234.';
+        const utr = getFieldValue('bankUtr');
+        if (!utr) return 'Please enter the UTR / reference number from your transfer.';
+        if (!/^[A-Za-z0-9]{6,30}$/.test(utr)) return 'That UTR looks incorrect — letters and numbers only, 6 to 30 characters.';
       } else {
         const upiId = getFieldValue('upiId');
         if (!upiId) return 'Please enter the UPI ID you paid from.';
         if (!/^[\w.\-]{2,}@[\w.\-]{2,}$/.test(upiId)) return 'That UPI ID looks incomplete — it should look like name@bank.';
+        const ref = getFieldValue('upiTxnRef');
+        if (!ref) return 'Please enter the UPI transaction ID from your payment confirmation.';
+        if (!/^[A-Za-z0-9]{6,30}$/.test(ref)) return 'That transaction ID looks incorrect — letters and numbers only, 6 to 30 characters.';
       }
       const fileInput = document.getElementById('paymentScreenshot');
       if (!fileInput.files || !fileInput.files[0]) return 'Please upload a screenshot of your UPI payment.';
@@ -169,9 +175,11 @@
       waiverDate: getFieldValue('waiverDate'),
       paymentMethod: getFieldValue('paymentMethod'),
       upiId: getFieldValue('upiId'),
+      upiTxnRef: getFieldValue('upiTxnRef'),
       payerAccountName: getFieldValue('payerAccountName'),
       payerAccountNumber: getFieldValue('payerAccountNumber'),
       payerIfsc: getFieldValue('payerIfsc'),
+      bankUtr: getFieldValue('bankUtr'),
     };
   }
 
