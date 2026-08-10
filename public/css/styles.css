@@ -5,8 +5,6 @@
   --red: #C41E2A;
   --red-deep: #9A151F;
   --sky: #46AEE0;
-  --olive: #5A6B35;
-  --rust: #C1622C;
   --sky-pale: #EAF6FD;
   --paper: #FFFFFF;
   --ink: #14161C;
@@ -157,21 +155,12 @@ h1.headline .accent { color: var(--red); font-style: italic; }
 .bib-row:last-child { border-bottom: none; }
 .bib-row .k { color: var(--ink-soft); font-size: 0.66rem; }
 .bib-row .v { font-family: Arial, system-ui, sans-serif; font-weight: 700; font-size: 0.92rem; color: var(--navy); }
-.bib-num {
-  position: absolute; top: -13px; left: 28px;
-  background: var(--red); color: #fff;
-  font-family: Arial, system-ui, sans-serif; font-weight: 700;
-  font-size: 0.64rem; letter-spacing: 0.14em; padding: 5px 12px;
-}
 
 /* ---------- CATEGORY STRIP ---------- */
 .categories { background: var(--paper); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .cat-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
 .cat { padding: 32px 28px; border-right: 1px solid var(--line); }
 .cat:last-child { border-right: none; }
-.cat:nth-child(1) { border-top: 3px solid var(--red); }
-.cat:nth-child(2) { border-top: 3px solid var(--sky); }
-.cat:nth-child(3) { border-top: 3px solid var(--olive); }
 .cat .dist { font-size: 2.5rem; font-weight: 700; color: var(--navy); line-height: 1; }
 .cat .dist span { color: var(--red); }
 .cat .name { margin-top: 10px; font-size: 0.94rem; color: var(--ink-soft); }
@@ -182,7 +171,6 @@ h1.headline .accent { color: var(--red); font-style: italic; }
 h2.section-title { font-size: clamp(1.8rem, 3.2vw, 2.4rem); line-height: 1.1; margin: 0 0 8px; color: var(--navy); text-wrap: balance; }
 .kicker { display: block; color: var(--red); margin-bottom: 14px; }
 .about p { font-size: 1rem; line-height: 1.75; color: var(--ink-soft); max-width: 60ch; }
-.stripe { height: 4px; width: 90px; background: linear-gradient(90deg, var(--navy) 0 20%, var(--red) 20% 40%, var(--rust) 40% 60%, var(--sky) 60% 80%, var(--olive) 80% 100%); margin: 24px 0 0; }
 
 /* ---------- DETAILS ---------- */
 .details { background: var(--paper); color: var(--ink); padding: 76px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
@@ -202,7 +190,6 @@ footer.site { background: var(--paper); color: var(--ink-soft); padding: 44px 0;
 .foot-brand img { width: 38px; height: auto; }
 .foot-brand .t1 { color: var(--navy); font-weight: 700; font-size: 0.95rem; }
 .foot-brand .t2 { font-size: 0.7rem; color: var(--red); }
-.stripe-mini { height: 3px; width: 100%; background: linear-gradient(90deg, var(--navy-soft) 0 20%, var(--red) 20% 40%, var(--rust) 40% 60%, var(--sky) 60% 80%, var(--olive) 80% 100%); margin-bottom: 28px; opacity: 0.85; }
 .foot-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; font-size: 0.8rem; }
 
 /* ============ REGISTRATION MODAL ============ */

@@ -9,7 +9,7 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-const FEES = { '3K': 500, '5K': 500, '10K': 500 };
+const FEES = { '3K': 499, '5K': 499, '10K': 499 };
 
 const upload = multer({
   storage: multer.memoryStorage(),

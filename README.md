@@ -62,7 +62,7 @@ The endpoint is unauthenticated by URL, so the shared secret is what stops stran
 5. Deploy. Render gives you a `https://unity-run-2026.onrender.com`-style URL; a custom domain can be attached later from the same dashboard.
 
 ## Notes
-- Entry fee is currently a flat ₹500 for all categories — change the `FEES` object in `server/index.js` if categories should have different prices.
+- Entry fee is currently a flat ₹499 for all categories — change the `FEES` object in `server/index.js` if categories should have different prices.
 - Payment is **not** automatically verified. Every registration lands in the sheet as `Pending verification`; an organizer opens the linked screenshot, checks it against the UPI ID, and updates that cell. Budget time for this before the event.
 - Screenshot uploads are capped at 5 MB and must be image files.
 - The "tap to pay" QR link uses a `upi://` deep link, which only opens an app on mobile devices. On desktop, runners scan the QR with their phone instead.

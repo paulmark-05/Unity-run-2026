@@ -11,7 +11,7 @@ require('dotenv').config();
 const path = require('path');
 const QRCode = require('qrcode');
 
-const REGISTRATION_FEE = 500;
+const REGISTRATION_FEE = 499;
 
 const amount = process.argv[2] || String(REGISTRATION_FEE);
 const vpa = process.env.UPI_VPA;

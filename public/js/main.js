@@ -19,7 +19,7 @@
   ];
 
   let currentStep = 1;
-  let fees = { '3K': 500, '5K': 500, '10K': 500 };
+  let fees = { '3K': 499, '5K': 499, '10K': 499 };
   let upiVpa = null;
   let upiPayeeName = 'Unity Run 2026';
   let upiOrgId = '159020';
@@ -167,7 +167,7 @@
       return;
     }
     const category = getFieldValue('category');
-    const amount = fees[category] || 500;
+    const amount = fees[category] || 499;
     // Mirrors the bank QR's parameters so UPI apps treat it as the same merchant.
     const params = new URLSearchParams({
       ver: '01',
@@ -200,7 +200,7 @@
     summaryList.innerHTML = rows
       .map(([k, v]) => `<li><span>${k}</span><span>${escapeHtml(v || '—')}</span></li>`)
       .join('');
-    const fee = fees[data.category] || 500;
+    const fee = fees[data.category] || 499;
     feeAmount.textContent = `₹${fee}`;
   }
 
