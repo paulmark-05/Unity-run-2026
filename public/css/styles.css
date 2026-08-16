@@ -102,8 +102,8 @@ nav.links a { text-decoration: none; font-size: 0.72rem; color: var(--ink-soft);
 
 /* ---------- HERO ---------- */
 .hero { background: var(--paper); position: relative; overflow: hidden; }
-.hero-top { text-align: center; padding: 56px 0 10px; }
-.hero-logo { max-width: 380px; margin: 0 auto; }
+.hero-top { text-align: center; padding-top: 56px; padding-bottom: 10px; }
+.hero-logo { max-width: 380px; width: 100%; margin: 0 auto; }
 
 .hero-grid {
   display: grid;
@@ -466,4 +466,17 @@ footer.site { background: var(--paper); color: var(--ink-soft); padding: 44px 0;
   .upi-qr { max-width: 240px; margin: 0 auto; }
   .bank-details { grid-template-columns: 1fr; gap: 2px; }
   .bank-details dd { margin-bottom: 10px; }
+  /* Larger tap targets for fingers — the 32px desktop pill height is too small to tap reliably. */
+  .pill { padding: 13px 16px; }
+  .btn { padding: 15px 24px; }
+  .btn-outline { padding: 13px 20px; }
+}
+
+@media (max-width: 480px) {
+  .wrap { padding-left: 16px; padding-right: 16px; }
+  .hero-top { padding-top: 40px; }
+  h1.headline { font-size: 1.9rem; }
+  .cat .dist { font-size: 2.1rem; }
+  .form-body { padding: 20px; }
+  .f-row.three { grid-template-columns: 1fr 1fr; }
 }
