@@ -50,15 +50,38 @@ header.site {
   gap: 24px;
   padding: 14px 0;
 }
-.org { display: flex; align-items: center; gap: 12px; }
-.org img { width: 44px; height: auto; }
-.org-text { line-height: 1.25; }
+.org { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
+.org img { width: 44px; height: auto; flex-shrink: 0; }
+.org-text { line-height: 1.25; min-width: 0; overflow: hidden; }
 .org-text .k { font-size: 0.62rem; color: var(--ink-soft); }
-.org-text .v { font-size: 0.78rem; font-weight: 700; color: var(--navy); }
-.divider-v { width: 1px; align-self: stretch; background: var(--line); }
-nav.links { display: flex; gap: 26px; }
+.org-text .v {
+  font-size: 0.78rem; font-weight: 700; color: var(--navy);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.divider-v { width: 1px; align-self: stretch; background: var(--line); flex-shrink: 0; }
+nav.links { display: flex; align-items: center; gap: 26px; }
 nav.links a { text-decoration: none; font-size: 0.72rem; color: var(--ink-soft); }
-.header-actions { display: flex; align-items: center; gap: 20px; }
+nav.links .nav-links-register { display: none; }
+.header-actions { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+
+/* Hamburger toggle — hidden on desktop, where nav.links shows inline */
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1.5px solid var(--navy);
+  background: transparent;
+  cursor: pointer;
+}
+.nav-toggle span { width: 18px; height: 2px; background: var(--navy); transition: transform 0.2s ease, opacity 0.2s ease; }
+.nav-toggle[aria-expanded="true"] span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.nav-toggle[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+.nav-toggle[aria-expanded="true"] span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
 
 .btn {
   font-family: Arial, 'Helvetica Neue', system-ui, sans-serif;
@@ -459,9 +482,43 @@ footer.site { background: var(--paper); color: var(--ink-soft); padding: 44px 0;
   .about-grid { grid-template-columns: 1fr; gap: 32px; }
   .details-grid { grid-template-columns: 1fr; gap: 32px; }
   .prize-grid { grid-template-columns: 1fr; gap: 18px; }
-  nav.links { display: none; }
+
+  /* Nav collapses into a toggled dropdown instead of disappearing.
+     The header's own Register button gives way to the one inside the
+     dropdown, so mobile only ever shows one CTA at a time. */
+  .nav-toggle { display: flex; }
+  .header-actions .btn-outline { display: none; }
+  .org-text { max-width: 50vw; }
+  nav.links {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    background: var(--paper);
+    border-bottom: 2px solid var(--navy);
+    box-shadow: 0 16px 30px -20px rgba(27,34,96,0.35);
+  }
+  nav.links.open { display: flex; }
+  nav.links a {
+    font-size: 0.9rem;
+    color: var(--ink);
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--line);
+  }
+  nav.links .nav-links-register {
+    display: block;
+    margin: 16px 20px 20px;
+    text-align: center;
+    justify-content: center;
+  }
+  header.site { position: sticky; }
+  .nav { position: relative; }
+
   .f-row, .f-row.three { grid-template-columns: 1fr; }
-  .org-text { display: none; }
   .upi-pay { grid-template-columns: 1fr; }
   .upi-qr { max-width: 240px; margin: 0 auto; }
   .bank-details { grid-template-columns: 1fr; gap: 2px; }
