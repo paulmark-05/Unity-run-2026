@@ -26,7 +26,22 @@ cp .env.example .env   # then fill in the values, see below
 npm start
 ```
 
-The site runs at `http://localhost:3000`.
+The site runs at `http://localhost:3000/unity-run/`.
+
+## Multi-site layout
+
+This is meant to run under `zsb-barasat.com`, hosting more than one ZSB
+project side by side:
+
+- `zsb-barasat.com/` — a small portal page listing every site (see the
+  `app.get('/', ...)` route at the bottom of `server/index.js`)
+- `zsb-barasat.com/unity-run/` — this event, everything in `public/`
+
+To add another site later, mount a second `express.Router()` the same way
+`site` is mounted at `/unity-run` in `server/index.js`, and add a card to the
+portal route. Frontend code must keep using relative paths (`assets/...`,
+`fetch('api/...')`, never a leading `/`) so it keeps working regardless of
+which path prefix it's mounted under.
 
 ## What you need before this goes live
 

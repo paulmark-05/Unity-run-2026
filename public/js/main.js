@@ -30,7 +30,7 @@
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
     resetToStep1();
-    fetch('/api/config')
+    fetch('api/config')
       .then((r) => r.json())
       .then((cfg) => {
         if (cfg.fees) fees = cfg.fees;
@@ -322,7 +322,7 @@
     payload.append('paymentScreenshot', document.getElementById('paymentScreenshot').files[0]);
 
     try {
-      const res = await fetch('/api/register', { method: 'POST', body: payload });
+      const res = await fetch('api/register', { method: 'POST', body: payload });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Registration could not be completed.');
 
