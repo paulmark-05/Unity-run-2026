@@ -25,16 +25,44 @@ async function appendRegistration(row) {
   });
 }
 
-/** Registrations recorded so far, excluding the header row. */
-async function countRegistrations() {
+// Column positions (0-based) within a data row, matching the sheet header:
+// ... K:Category(11) ... V:PaymentStatus(21)
+const COL_CATEGORY = 11;
+const COL_PAYMENT_STATUS = 21;
+const CATEGORIES = ['10K', '6K', '4K'];
+const CONFIRMED_VALUES = new Set(['confirmed', 'verified', 'yes']);
+
+/**
+ * One sheet read, two views of it:
+ *  - totalRows / totalByCategory: every registration regardless of payment
+ *    status — used to enforce the per-category slot caps, since a pending
+ *    registration still holds a slot.
+ *  - confirmedByCategory: only rows an organizer has marked as a confirmed
+ *    payment — this is what the public live counters show.
+ */
+async function getRegistrationStats() {
   const auth = getAuth();
   const sheets = google.sheets({ version: 'v4', auth });
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: process.env.GOOGLE_SHEET_ID,
-    range: `${SHEET_TAB}!A:A`,
+    range: `${SHEET_TAB}!A2:Z`, // skip the header row
   });
   const rows = res.data.values || [];
-  return Math.max(0, rows.length - 1);
+
+  const totalByCategory = { '10K': 0, '6K': 0, '4K': 0 };
+  const confirmedByCategory = { '10K': 0, '6K': 0, '4K': 0 };
+
+  for (const row of rows) {
+    const category = (row[COL_CATEGORY] || '').trim();
+    if (!CATEGORIES.includes(category)) continue;
+    totalByCategory[category] += 1;
+    const status = String(row[COL_PAYMENT_STATUS] || '').trim().toLowerCase();
+    if (CONFIRMED_VALUES.has(status)) {
+      confirmedByCategory[category] += 1;
+    }
+  }
+
+  return { totalRows: rows.length, totalByCategory, confirmedByCategory };
 }
 
-module.exports = { appendRegistration, countRegistrations };
+module.exports = { appendRegistration, getRegistrationStats };

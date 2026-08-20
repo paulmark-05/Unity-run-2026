@@ -1,8 +1,10 @@
 require('dotenv').config();
 const path = require('path');
+const http = require('http');
 const express = require('express');
 const multer = require('multer');
-const { appendRegistration, countRegistrations } = require('./sheets');
+const { Server: SocketIOServer } = require('socket.io');
+const { appendRegistration, getRegistrationStats } = require('./sheets');
 const { uploadPaymentScreenshot, sendMail } = require('./drive');
 
 const app = express();
@@ -23,27 +25,43 @@ const CATEGORY_LABELS = {
   '4K': '4K Walk',
 };
 
-// Registration closes at the end of 12 September 2026, or once the field is full.
+// Registration closes at the end of 12 September 2026, or once a category
+// group's slots are full — the 10K and 6K runs share one pool, the 4K walk
+// has its own.
 const REGISTRATION_CLOSES = new Date('2026-09-12T23:59:59+05:30');
-const PARTICIPANT_CAP = 300;
+const RUN_CAP = 300; // 10K + 6K combined
+const WALK_CAP = 200; // 4K only
+const GROUP_OF_CATEGORY = { '10K': 'run', '6K': 'run', '4K': 'walk' };
 
 async function registrationStatus() {
   const closedByDate = Date.now() > REGISTRATION_CLOSES.getTime();
-  let count = null;
+  let stats = null;
   try {
-    count = await countRegistrations();
+    stats = await getRegistrationStats();
   } catch (err) {
-    console.error('could not read registration count:', err.message);
+    console.error('could not read registration stats:', err.message);
   }
-  const closedByCap = count !== null && count >= PARTICIPANT_CAP;
+
+  const runCount = stats ? stats.totalByCategory['10K'] + stats.totalByCategory['6K'] : null;
+  const walkCount = stats ? stats.totalByCategory['4K'] : null;
+
   return {
-    open: !closedByDate && !closedByCap,
     closedByDate,
-    closedByCap,
-    count,
-    cap: PARTICIPANT_CAP,
     closesOn: '12 September 2026',
+    stats,
+    groups: {
+      run: { count: runCount, cap: RUN_CAP, full: runCount !== null && runCount >= RUN_CAP },
+      walk: { count: walkCount, cap: WALK_CAP, full: walkCount !== null && walkCount >= WALK_CAP },
+    },
   };
+}
+
+/** Whether a given category can still accept registrations right now. */
+function openFor(status, category) {
+  if (status.closedByDate) return false;
+  const group = GROUP_OF_CATEGORY[category];
+  if (!group) return false;
+  return !status.groups[group].full;
 }
 
 const upload = multer({
@@ -58,10 +76,12 @@ const upload = multer({
 });
 
 site.get('/api/config', async (req, res) => {
+  const status = await registrationStatus();
   res.json({
     fees: FEES,
     categoryLabels: CATEGORY_LABELS,
-    registration: await registrationStatus(),
+    registration: status,
+    counts: status.stats ? status.stats.confirmedByCategory : { '10K': 0, '6K': 0, '4K': 0 },
     upiVpa: process.env.UPI_VPA || null,
     upiPayeeName: process.env.UPI_PAYEE_NAME || 'Unity Run 2026',
     upiOrgId: process.env.UPI_ORG_ID || '159020',
@@ -118,6 +138,9 @@ function validateRegistration(data) {
   if (data.waiverAccepted !== 'true' && data.waiverAccepted !== true) {
     return 'The participant waiver must be accepted.';
   }
+  if (data.liabilityAccepted !== 'true' && data.liabilityAccepted !== true) {
+    return 'The voluntary participation declaration must be accepted before payment.';
+  }
   return null;
 }
 
@@ -126,12 +149,14 @@ site.post('/api/register', upload.single('paymentScreenshot'), async (req, res) 
     const registration = req.body;
 
     const status = await registrationStatus();
-    if (!status.open) {
-      return res.status(409).json({
-        error: status.closedByCap
-          ? `Registration is full — all ${PARTICIPANT_CAP} places have been taken.`
-          : 'Registration closed on 12 September 2026.',
-      });
+    if (status.closedByDate) {
+      return res.status(409).json({ error: 'Registration closed on 12 September 2026.' });
+    }
+    if (!openFor(status, registration.category)) {
+      const group = GROUP_OF_CATEGORY[registration.category];
+      const label = group === 'walk' ? '4K Walk' : '10K / 6K Run';
+      const cap = group === 'walk' ? WALK_CAP : RUN_CAP;
+      return res.status(409).json({ error: `${label} registration is full — all ${cap} places have been taken.` });
     }
 
     const validationError = validateRegistration(registration);
@@ -165,7 +190,7 @@ site.post('/api/register', upload.single('paymentScreenshot'), async (req, res) 
 
     // Places are allocated in order of payment, so the sequence number is the
     // position in the sheet at the moment the row is written.
-    const sequenceNo = (status.count === null ? 0 : status.count) + 1;
+    const sequenceNo = (status.stats ? status.stats.totalRows : 0) + 1;
 
     await appendRegistration([
       new Date().toISOString(),
@@ -292,7 +317,37 @@ app.get('/', (req, res) => {
 </html>`);
 });
 
+// Live registration counters. Socket.IO sits on the raw HTTP server (it
+// isn't Express middleware), so it's given its own path under /unity-run to
+// match the rest of the site instead of claiming the shared /socket.io root
+// — later sites can have their own without colliding with this one.
+const httpServer = http.createServer(app);
+const io = new SocketIOServer(httpServer, { path: '/unity-run/socket.io' });
+
+async function currentCounts() {
+  const stats = await getRegistrationStats();
+  return stats.confirmedByCategory;
+}
+
+io.on('connection', async (socket) => {
+  try {
+    socket.emit('counts', await currentCounts());
+  } catch (err) {
+    console.error('could not send initial counts:', err.message);
+  }
+});
+
+const COUNTS_BROADCAST_INTERVAL_MS = 25 * 1000;
+setInterval(async () => {
+  if (io.engine.clientsCount === 0) return; // nobody listening, skip the API call
+  try {
+    io.emit('counts', await currentCounts());
+  } catch (err) {
+    console.error('counts broadcast failed:', err.message);
+  }
+}, COUNTS_BROADCAST_INTERVAL_MS);
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Unity Run 2026 server listening on port ${PORT}`);
 });

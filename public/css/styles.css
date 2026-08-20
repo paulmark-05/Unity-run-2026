@@ -184,9 +184,25 @@ h1.headline .accent { color: var(--red); font-style: italic; }
 .cat-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
 .cat { padding: 32px 28px; border-right: 1px solid var(--line); }
 .cat:last-child { border-right: none; }
+.cat-type { color: var(--red); margin-bottom: 6px; }
 .cat .dist { font-size: 2.5rem; font-weight: 700; color: var(--navy); line-height: 1; }
 .cat .dist span { color: var(--red); }
 .cat .name { margin-top: 10px; font-size: 0.94rem; color: var(--ink-soft); }
+.cat .name.full-note { color: var(--red); font-weight: 700; }
+
+/* Live registration counters — a small digit-flip readout at the top of each category card */
+.cat-counter { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.flip-group { display: flex; gap: 3px; perspective: 200px; }
+.flip-cell {
+  width: 20px; height: 27px;
+  background: var(--navy); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-family: Arial, system-ui, sans-serif; font-weight: 700; font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.flip-label { font-family: Arial, system-ui, sans-serif; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
 
 /* ---------- ABOUT ---------- */
 .about { padding: 84px 0; }
@@ -201,6 +217,7 @@ h2.section-title { font-size: clamp(1.8rem, 3.2vw, 2.4rem); line-height: 1.1; ma
 .d-item .num { font-family: Arial, system-ui, sans-serif; font-size: 0.68rem; color: var(--red); letter-spacing: 0.18em; }
 .d-item h3 { font-size: 1.4rem; margin: 12px 0 10px; color: var(--navy); }
 .d-item p { color: var(--ink-soft); line-height: 1.65; font-size: 0.93rem; }
+.d-item p.assemble-note { font-weight: 700; color: var(--red); font-size: 0.98rem; }
 
 /* ---------- PRIZES ---------- */
 .prize-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 32px; }
@@ -307,6 +324,7 @@ footer.site { background: var(--paper); color: var(--ink-soft); padding: 44px 0;
 }
 .pill-row input:checked + .pill { border-color: var(--red); background: rgba(196,30,42,0.08); color: var(--red); font-weight: 700; }
 .pill-row input:focus-visible + .pill { outline: 2px solid var(--sky); outline-offset: 2px; }
+.pill-row input:disabled + .pill { opacity: 0.45; cursor: not-allowed; text-decoration: line-through; }
 
 .fieldset { border: none; margin: 0; padding: 0; }
 .legend { font-family: Arial, system-ui, sans-serif; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 8px; padding: 0; }
@@ -328,6 +346,15 @@ footer.site { background: var(--paper); color: var(--ink-soft); padding: 44px 0;
 .waiver-check { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 18px; }
 .waiver-check input { margin-top: 4px; }
 .waiver-check label { font-size: 0.88rem; line-height: 1.5; color: var(--ink); }
+.liability-check {
+  border: 1px solid var(--line); border-left: 3px solid var(--red);
+  background: #FDEAEA; padding: 14px 16px; margin: 4px 0 20px;
+}
+.liability-check label { font-weight: 700; color: var(--red-deep); }
+
+/* Payment fields stay visible but inert until the declaration above is checked */
+#paymentSection { transition: opacity 0.15s ease; }
+#paymentSection.payment-section-disabled { opacity: 0.4; pointer-events: none; }
 
 .fee-line { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 20px 0; }
 .fee-line .k { font-size: 0.84rem; color: var(--ink-soft); }

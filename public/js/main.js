@@ -26,6 +26,8 @@
   let upiMerchantCode = '7800';
   let bankDetails = null;
 
+  const GROUP_OF_CATEGORY = { '10K': 'run', '6K': 'run', '4K': 'walk' };
+
   function openModal() {
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -83,6 +85,7 @@
       renderUpiDetails();
       renderBankDetails();
       showPaymentBlocks();
+      updatePaymentGate();
     } else {
       nextBtn.append('Continue ');
       nextBtn.append(arrow);
@@ -132,6 +135,7 @@
       if (!getFieldValue('signature')) return 'Please type your full name as digital consent.';
     }
     if (n === 4) {
+      if (!getFieldValue('liabilityAccepted')) return 'You must accept the voluntary participation declaration before paying.';
       const method = getFieldValue('paymentMethod');
       if (method === 'Bank Transfer') {
         if (!getFieldValue('payerAccountName')) return 'Please enter the account holder name.';
@@ -174,6 +178,7 @@
       waiverAccepted: getFieldValue('waiverAccepted'),
       signature: getFieldValue('signature'),
       waiverDate: getFieldValue('waiverDate'),
+      liabilityAccepted: getFieldValue('liabilityAccepted'),
       paymentMethod: getFieldValue('paymentMethod'),
       upiId: getFieldValue('upiId'),
       upiTxnRef: getFieldValue('upiTxnRef'),
@@ -215,26 +220,65 @@
     document.getElementById('bankBlock').hidden = method !== 'Bank Transfer';
   }
 
-  /** Closes the form when the field is full or the entry window has passed. */
+  /** Payment fields stay visible but are inert, and Submit is disabled, until
+   *  the voluntary-participation declaration is checked. */
+  function updatePaymentGate() {
+    const accepted = getFieldValue('liabilityAccepted');
+    const paymentSection = document.getElementById('paymentSection');
+    if (paymentSection) paymentSection.classList.toggle('payment-section-disabled', !accepted);
+    if (currentStep === 4) nextBtn.disabled = !accepted;
+  }
+
+  /**
+   * The 10K/6K run and the 4K walk have separate slot pools, so "full" is a
+   * per-group state, not a single site-wide switch. Disables just the pills
+   * for a full group, and only shuts down the whole form if every group
+   * (or the date) has closed registration entirely.
+   */
   function applyRegistrationStatus(status) {
-    if (!status) return;
+    if (!status || !status.groups) return;
+
+    const { run, walk } = status.groups;
+    const closed = status.closedByDate;
+
+    const categoryInputs = {
+      '10K': document.getElementById('cat10k'),
+      '6K': document.getElementById('cat6k'),
+      '4K': document.getElementById('cat4k'),
+    };
+    Object.entries(categoryInputs).forEach(([category, input]) => {
+      if (!input) return;
+      const groupStatus = GROUP_OF_CATEGORY[category] === 'walk' ? walk : run;
+      const full = closed || Boolean(groupStatus && groupStatus.full);
+      input.disabled = full;
+      const label = document.querySelector(`label[for="${input.id}"]`);
+      if (label) {
+        if (!label.dataset.baseText) label.dataset.baseText = label.textContent;
+        label.textContent = full ? `${label.dataset.baseText} — FULL` : label.dataset.baseText;
+      }
+    });
 
     const placesLeft = document.getElementById('placesLeft');
-    if (placesLeft && status.count !== null && status.open) {
-      const remaining = Math.max(0, status.cap - status.count);
-      placesLeft.textContent = `Entries close ${status.closesOn} · ${remaining} of ${status.cap} places left`;
+    if (placesLeft) {
+      if (closed) {
+        placesLeft.textContent = `Registration closed on ${status.closesOn}.`;
+      } else {
+        const parts = [`Entries close ${status.closesOn}`];
+        if (run && run.count !== null) parts.push(`${Math.max(0, run.cap - run.count)} of ${run.cap} run places left`);
+        if (walk && walk.count !== null) parts.push(`${Math.max(0, walk.cap - walk.count)} of ${walk.cap} walk places left`);
+        placesLeft.textContent = parts.join(' · ');
+      }
     }
 
-    if (status.open) return;
+    const everythingFull = run && walk && run.full && walk.full;
+    if (!closed && !everythingFull) return;
 
-    const message = status.closedByCap
-      ? `Registration is full — all ${status.cap} places have been taken.`
-      : `Registration closed on ${status.closesOn}.`;
-
+    const message = closed
+      ? `Registration closed on ${status.closesOn}.`
+      : 'Registration is full — all places have been taken.';
     formBodyForm.style.display = 'none';
     formFooter.style.display = 'none';
     showError(message);
-    if (placesLeft) placesLeft.textContent = message;
     document.querySelectorAll('.js-open-register').forEach((btn) => {
       btn.disabled = true;
       btn.title = message;
@@ -329,15 +373,18 @@
       document.getElementById('successBib').textContent = data.registrationId;
       const seq = document.getElementById('successSeq');
       if (seq && data.sequenceNo) {
-        seq.textContent = `You are participant no. ${data.sequenceNo} of 300.`;
+        seq.textContent = `Your registration number is ${data.sequenceNo}.`;
       }
       formBodyForm.style.display = 'none';
       formFooter.style.display = 'none';
       successView.style.display = 'block';
     } catch (err) {
-      showError(err.message || 'Registration could not be saved. Please try again.');
+      // showStep() clears the error banner as part of resetting the step, so it
+      // must run before showError() — otherwise the message we're about to set
+      // gets wiped immediately and the user never sees why it failed.
       setSubmitting(false);
       showStep(4);
+      showError(err.message || 'Registration could not be saved. Please try again.');
     }
   }
 
@@ -366,6 +413,11 @@
   document.getElementById('paymentMethod').addEventListener('change', () => {
     hideError();
     showPaymentBlocks();
+  });
+
+  document.getElementById('liabilityAccepted').addEventListener('change', () => {
+    hideError();
+    updatePaymentGate();
   });
 
   document.querySelectorAll('.js-open-register').forEach((btn) => {
@@ -402,5 +454,51 @@
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') closeNav();
     });
+  }
+
+  // ---------- Live registration counters ----------
+  // A per-digit flip: rotate the current digit away, swap the text at the
+  // point it's edge-on (so the switch is invisible), then rotate the new
+  // digit in from the same edge.
+  function flipCellTo(cell, newChar) {
+    if (cell.textContent === newChar) return;
+    cell.style.transition = 'transform 0.15s linear';
+    cell.style.transform = 'rotateX(90deg)';
+    setTimeout(() => {
+      cell.textContent = newChar;
+      cell.style.transition = 'none';
+      cell.style.transform = 'rotateX(-90deg)';
+      cell.offsetHeight; // force reflow so the next line's transition applies
+      requestAnimationFrame(() => {
+        cell.style.transition = 'transform 0.15s linear';
+        cell.style.transform = 'rotateX(0deg)';
+      });
+    }, 150);
+  }
+
+  function setCounter(category, value) {
+    const group = document.querySelector(`.flip-group[data-category="${category}"]`);
+    if (!group) return;
+    const cells = group.querySelectorAll('.flip-cell');
+    const str = String(Math.max(0, value)).padStart(cells.length, '0').slice(-cells.length);
+    cells.forEach((cell, i) => flipCellTo(cell, str[i]));
+  }
+
+  function applyCounts(counts) {
+    if (!counts) return;
+    Object.keys(GROUP_OF_CATEGORY).forEach((category) => {
+      if (category in counts) setCounter(category, counts[category]);
+    });
+  }
+
+  // Prime the counters on page load; Socket.IO keeps them live after that.
+  fetch('api/config')
+    .then((r) => r.json())
+    .then((cfg) => applyCounts(cfg.counts))
+    .catch(() => {});
+
+  if (window.io) {
+    const socket = window.io({ path: '/unity-run/socket.io' });
+    socket.on('counts', applyCounts);
   }
 })();

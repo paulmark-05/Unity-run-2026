@@ -92,12 +92,23 @@ To enable the final confirmation, add a trigger in the Apps Script editor:
 column so nobody is mailed twice.
 
 ### 5. Registration window
-Set in `server/index.js`: entries close end of **12 September 2026**, capped at
-**300** participants. Once either limit is hit the form closes itself and the
-API refuses new registrations. Participants are numbered in the order their
-registration is received.
+Set in `server/index.js`: entries close end of **12 September 2026**. Slots are
+capped per group, not site-wide — the 10K and 6K runs share one pool of
+**300**, the 4K walk has its own **200**. A full group disables just its own
+pills on the form (`RUN_CAP` / `WALK_CAP` / `GROUP_OF_CATEGORY` in
+`server/index.js`); the whole form only shuts down once every group is full
+or the date has passed. Registrations are numbered in the order received.
 
-### 6. Deploy to Render
+### 6. Live registration counters
+Each category card shows a live count of *confirmed* registrations (payment
+verified, not just submitted), pushed over Socket.IO so it updates on-screen
+without a refresh. It reads the same "Payment Status" column the confirmation
+emails use — set a row to `Confirmed` and the counter picks it up within
+`COUNTS_BROADCAST_INTERVAL_MS` (25s by default) for anyone with the page open.
+No extra setup needed beyond what's already above; it uses the same Google
+Sheet and Apps Script deployment as everything else on this page.
+
+### 7. Deploy to Render
 1. Push this repo to GitHub (already done if you're reading this from the repo).
 2. On [render.com](https://render.com), create a **New Web Service**, connect the `Unity-run-2026` GitHub repo.
 3. Build command: `npm install`. Start command: `npm start`.
@@ -106,6 +117,7 @@ registration is received.
 
 ## Notes
 - Entry fees: ₹500 for the 10K and 6K timed runs, ₹350 for the 4K walk. Change the `FEES` object in `server/index.js`, then rerun `npm run qr` so the QR amounts match.
-- Payment is **not** automatically verified. Every registration lands in the sheet as `Pending verification`; an organizer opens the linked screenshot, matches the transaction reference against the bank/UPI statement, and updates that cell. Budget time for this before the event.
+- Payment is **not** automatically verified. Every registration lands in the sheet as `Pending verification`; an organizer opens the linked screenshot, matches the transaction reference against the bank/UPI statement, and updates that cell to `Confirmed` — this also feeds the live counters and triggers the final confirmation email. Budget time for this before the event.
 - Screenshot uploads are capped at 5 MB and must be image files.
 - The "tap to pay" QR link uses a `upi://` deep link, which only opens an app on mobile devices. On desktop, runners scan the QR with their phone instead.
+- The payment step also requires a voluntary-participation liability declaration, separate from the fitness waiver in Section 3. Payment fields stay visible but are disabled until it's checked.

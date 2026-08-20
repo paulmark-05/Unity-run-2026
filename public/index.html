@@ -46,7 +46,7 @@
       <p class="sub body-text">Join us in running for unity, strength, and community. A chip-timed 10K and 6K with prize money for men and women, and a 4K walk for everyone. In aid of the Armed Forces Flag Day Fund.</p>
       <div class="hero-cta-row">
         <button class="btn btn-primary js-open-register">Register Now <span class="arrow">→</span></button>
-        <span class="hint" id="placesLeft">Entries close 12 September 2026 · 300 places</span>
+        <span class="hint" id="placesLeft">Entries close 12 September 2026 · 300 run places · 200 walk places</span>
       </div>
     </div>
     <div>
@@ -64,16 +64,31 @@
 <section class="categories" id="categories">
   <div class="wrap cat-grid">
     <div class="cat">
+      <div class="cat-counter" aria-live="polite">
+        <div class="flip-group" data-category="10K"><span class="flip-cell">0</span><span class="flip-cell">0</span><span class="flip-cell">0</span></div>
+        <span class="flip-label">Registered</span>
+      </div>
+      <div class="cat-type label">Run</div>
       <div class="dist">10<span>K</span></div>
-      <div class="name sans">Timed Run · ₹500<br>Prize money ₹8,000 &amp; ₹5,000 — men's and women's</div>
+      <div class="name sans">Participation Fee: ₹500<br>Prize money ₹8,000 &amp; ₹5,000 — men's and women's categories</div>
     </div>
     <div class="cat">
+      <div class="cat-counter" aria-live="polite">
+        <div class="flip-group" data-category="6K"><span class="flip-cell">0</span><span class="flip-cell">0</span><span class="flip-cell">0</span></div>
+        <span class="flip-label">Registered</span>
+      </div>
+      <div class="cat-type label">Run</div>
       <div class="dist">6<span>K</span></div>
-      <div class="name sans">Timed Run · ₹500<br>Prize money ₹5,000 &amp; ₹3,000 — men's and women's</div>
+      <div class="name sans">Participation Fee: ₹500<br>Prize money ₹5,000 &amp; ₹3,000 — men's and women's categories</div>
     </div>
     <div class="cat">
+      <div class="cat-counter" aria-live="polite">
+        <div class="flip-group" data-category="4K"><span class="flip-cell">0</span><span class="flip-cell">0</span><span class="flip-cell">0</span></div>
+        <span class="flip-label">Registered</span>
+      </div>
+      <div class="cat-type label">Walk</div>
       <div class="dist">4<span>K</span></div>
-      <div class="name sans">Walk · ₹350<br>Untimed, no prizes — a fun activity, open to all</div>
+      <div class="name sans">Participation Fee: ₹350<br>Untimed, no prizes — a fun activity, open to all</div>
     </div>
   </div>
 </section>
@@ -102,6 +117,7 @@
       <div class="num label">Date &amp; Time</div>
       <h3>Sunday, 20 September 2026</h3>
       <p>Flag-off at 6:00 AM sharp for the 10K, followed by the 6K. Medal ceremony on completion of the run, at the stadium.</p>
+      <p class="assemble-note">All participants must assemble at the venue by 5:00 AM.</p>
     </div>
     <div class="d-item">
       <div class="num label">What's included</div>
@@ -137,7 +153,7 @@
 
 <section class="cta-band">
   <div class="wrap row">
-    <h2>Entries close 12 September 2026 — 300 places only.</h2>
+    <h2>Entries close 12 September 2026 — 300 run &amp; 200 walk places only.</h2>
     <button class="btn btn-primary js-open-register">Register Now <span class="arrow">→</span></button>
   </div>
 </section>
@@ -296,6 +312,12 @@
             <span class="v" id="feeAmount">₹499</span>
           </div>
 
+          <div class="waiver-check liability-check">
+            <input type="checkbox" id="liabilityAccepted" name="liabilityAccepted" required />
+            <label for="liabilityAccepted">I am participating in this event voluntarily and I will hold no one responsible for any incident occurring during this event.</label>
+          </div>
+
+          <div id="paymentSection" class="payment-section-disabled">
           <div class="f-group">
             <label class="f-label" for="paymentMethod">How would you like to pay?</label>
             <select class="f-select" id="paymentMethod" name="paymentMethod">
@@ -374,6 +396,7 @@
             <input class="f-file" id="paymentScreenshot" name="paymentScreenshot" type="file" accept="image/*" required />
             <div class="f-hint sans">PNG, JPG or WEBP · up to 5 MB</div>
           </div>
+          </div>
         </div>
       </form>
 
@@ -397,6 +420,7 @@
   </div>
 </div>
 
+<script src="socket.io/socket.io.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>
