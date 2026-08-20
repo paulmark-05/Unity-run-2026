@@ -42,6 +42,11 @@ const uri = (dir, file, mime) =>
   `data:${mime};base64,${fs.readFileSync(path.join(dir, file)).toString('base64')}`;
 
 const runLogo = uri(ASSETS, 'unity-run-logo-transparent.png', 'image/png');
+// Actual pixel dimensions of unity-run-logo-transparent.png (width / height) —
+// keep this in sync whenever the source logo is replaced, since the <image>
+// elements below are given explicit width/height and won't preserve aspect
+// ratio on their own.
+const LOGO_RATIO = 1100 / 936;
 const zsbLogo = uri(ASSETS, 'zsb-logo.jpg', 'image/jpeg');
 const photos = {
   wide: uri(PHOTOS, 'hero-wide.jpg', 'image/jpeg'),
@@ -67,7 +72,7 @@ function headerStrip(w, h, stripH, u) {
   const p = [`<rect x="0" y="0" width="${w}" height="${stripH}" fill="${PAPER}"/>`];
 
   const logoH = stripH * 0.84;
-  const logoW = logoH * (1100 / 728);
+  const logoW = logoH * LOGO_RATIO;
   p.push(`<image href="${runLogo}" x="${pad}" y="${(stripH - logoH) / 2}" width="${logoW}" height="${logoH}"/>`);
 
   const zsbH = stripH * 0.66;
