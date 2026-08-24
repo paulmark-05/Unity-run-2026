@@ -27,6 +27,10 @@
   let bankDetails = null;
 
   const GROUP_OF_CATEGORY = { '10K': 'run', '6K': 'run', '4K': 'walk' };
+  // Cached so the bento tiles' progress bars can be redrawn from socket
+  // "counts" pushes (frequent) without waiting on a fresh "registration"
+  // status fetch (rare — only changes when a group fills or closes).
+  let groupCaps = { run: 300, walk: 200 };
 
   function openModal() {
     modal.classList.add('open');
@@ -240,6 +244,13 @@
 
     const { run, walk } = status.groups;
     const closed = status.closedByDate;
+
+    const runCapNote = document.getElementById('runCapNote');
+    if (runCapNote && run) runCapNote.textContent = `registered · of ${run.cap}`;
+    const walkCapNote = document.getElementById('walkCapNote');
+    if (walkCapNote && walk) walkCapNote.textContent = `registered · of ${walk.cap}`;
+    if (run && run.cap) groupCaps.run = run.cap;
+    if (walk && walk.cap) groupCaps.walk = walk.cap;
 
     const categoryInputs = {
       '10K': document.getElementById('cat10k'),
@@ -476,25 +487,41 @@
     }, 150);
   }
 
-  function setCounter(category, value) {
-    const group = document.querySelector(`.flip-group[data-category="${category}"]`);
-    if (!group) return;
-    const cells = group.querySelectorAll('.flip-cell');
+  function setCounter(group, value) {
+    const el = document.querySelector(`.flip-group[data-group="${group}"]`);
+    if (!el) return;
+    const cells = el.querySelectorAll('.flip-cell');
     const str = String(Math.max(0, value)).padStart(cells.length, '0').slice(-cells.length);
     cells.forEach((cell, i) => flipCellTo(cell, str[i]));
+
+    const bar = document.getElementById(`${group}BarFill`);
+    if (bar) {
+      const cap = groupCaps[group] || 1;
+      bar.style.width = `${Math.min(100, (Math.max(0, value) / cap) * 100)}%`;
+    }
   }
 
+  // 10K and 6K share one "Run" counter, 4K stands alone as "Walk" — matches
+  // how the slot caps are grouped, so the number on screen is the same one
+  // that's actually being checked against a cap.
   function applyCounts(counts) {
     if (!counts) return;
-    Object.keys(GROUP_OF_CATEGORY).forEach((category) => {
-      if (category in counts) setCounter(category, counts[category]);
-    });
+    setCounter('run', (counts['10K'] || 0) + (counts['6K'] || 0));
+    setCounter('walk', counts['4K'] || 0);
   }
 
-  // Prime the counters on page load; Socket.IO keeps them live after that.
+  // Prime the counters and cap notes on page load — they're in the hero now,
+  // visible before anyone opens the registration modal. Socket.IO keeps the
+  // counters live after that; cap notes only change if a group fills up or
+  // closes, so they just refresh whenever the modal is opened again.
   fetch('api/config')
     .then((r) => r.json())
-    .then((cfg) => applyCounts(cfg.counts))
+    .then((cfg) => {
+      // Order matters: applyRegistrationStatus caches the real per-group caps
+      // that applyCounts needs to size the progress bars correctly.
+      applyRegistrationStatus(cfg.registration);
+      applyCounts(cfg.counts);
+    })
     .catch(() => {});
 
   if (window.io) {

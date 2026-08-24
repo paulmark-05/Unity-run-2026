@@ -128,44 +128,74 @@ nav.links .nav-links-register { display: none; }
 .hero-top { text-align: center; padding-top: 56px; padding-bottom: 10px; }
 .hero-logo { max-width: 380px; width: 100%; margin: 0 auto; }
 
-/* Live registration counters — the first thing visible below the logo,
-   deliberately above the fold rather than buried further down the page. */
+/* Live registration counters — bento-style stat tiles, the first thing
+   visible below the logo, above the fold rather than buried further down
+   the page. Deliberately rounded: this is the one "widget" on an otherwise
+   sharp-edged page, and the radius is what reads as a distinct stat card
+   rather than another content section. */
 .hero-counters {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(150px, 220px));
   justify-content: center;
-  align-items: stretch;
-  flex-wrap: wrap;
   gap: 14px;
-  padding: 18px 0 34px;
+  padding: 20px 0 36px;
 }
-.hero-counter {
+.bento-tile {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 10px;
+  background: var(--paper);
   border: 1px solid var(--line);
-  border-top: 3px solid var(--red);
-  background: var(--sky-pale);
-  padding: 10px 16px;
+  border-radius: 18px;
+  padding: 20px 18px 18px;
+  box-shadow: 0 14px 30px -22px rgba(27,34,96,0.35);
 }
-.hero-counter .flip-group { perspective: 200px; gap: 3px; }
-.hero-counter .flip-cell {
-  width: 24px; height: 32px;
-  background: var(--navy); color: #fff;
-  display: flex; align-items: center; justify-content: center;
-  font-family: Arial, system-ui, sans-serif; font-weight: 700; font-size: 1.15rem;
-  font-variant-numeric: tabular-nums;
-  transform-style: preserve-3d;
-  will-change: transform;
-}
-.hero-counter-label {
+.bento-tile[data-accent="run"] { background: linear-gradient(180deg, var(--sky-pale) 0%, var(--paper) 65%); }
+.bento-tile[data-accent="walk"] { background: linear-gradient(180deg, #FDEFEA 0%, var(--paper) 65%); }
+.bento-eyebrow {
   font-family: Arial, system-ui, sans-serif;
-  font-size: 0.68rem;
+  font-size: 0.66rem;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-soft);
-  max-width: 70px;
-  line-height: 1.3;
+  text-align: center;
 }
+.bento-tile .flip-group { perspective: 220px; gap: 4px; }
+.bento-tile .flip-cell {
+  width: 30px; height: 40px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: Arial, system-ui, sans-serif; font-weight: 700; font-size: 1.3rem;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.bento-tile[data-accent="run"] .flip-cell { background: var(--navy); }
+.bento-tile[data-accent="walk"] .flip-cell { background: var(--red); }
+.bento-caption {
+  font-family: Arial, system-ui, sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  color: var(--ink-soft);
+}
+.bento-bar {
+  width: 100%;
+  height: 5px;
+  border-radius: 99px;
+  background: var(--line);
+  overflow: hidden;
+}
+.bento-bar-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+.bento-tile[data-accent="run"] .bento-bar-fill { background: var(--navy); }
+.bento-tile[data-accent="walk"] .bento-bar-fill { background: var(--red); }
 
 .hero-grid {
   display: grid;
