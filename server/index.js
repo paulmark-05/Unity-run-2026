@@ -272,49 +272,12 @@ site.use((err, req, res, next) => {
   next();
 });
 
-// zsb-barasat.com root — a small portal listing the sites hosted here.
-// Add a card and a route the same way as /unity-run when the next site exists.
+// The domain's root sends visitors straight into the event — there's only
+// one site live right now, so a portal page in between was just an extra
+// click. When a second site exists, this is the place to bring back a
+// landing page (or move it to somewhere like /sites) instead of a redirect.
 app.get('/', (req, res) => {
-  res.type('html').send(`<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Zila Sainik Board, North 24 Parganas</title>
-<style>
-  :root { --navy: #1B2260; --red: #C41E2A; --ink-soft: #3C424E; --line: rgba(27,34,96,0.14); }
-  * { box-sizing: border-box; }
-  body { margin: 0; font-family: Georgia, serif; background: #fff; color: #14161C; }
-  .wrap { max-width: 640px; margin: 0 auto; padding: 56px 24px; }
-  header { display: flex; align-items: center; gap: 14px; margin-bottom: 40px; }
-  header img { width: 48px; height: auto; }
-  h1 { font-size: 1.3rem; color: var(--navy); margin: 0; }
-  .sites { display: flex; flex-direction: column; gap: 16px; }
-  .card {
-    display: block; text-decoration: none; color: inherit;
-    border: 1px solid var(--line); border-left: 3px solid var(--red);
-    padding: 20px 22px; transition: box-shadow 0.15s ease;
-  }
-  .card:hover { box-shadow: 0 12px 26px -18px rgba(27,34,96,0.4); }
-  .card .name { font-weight: 700; color: var(--navy); font-size: 1.05rem; }
-  .card .desc { font-family: Arial, sans-serif; font-size: 0.85rem; color: var(--ink-soft); margin-top: 6px; }
-</style>
-</head>
-<body>
-  <div class="wrap">
-    <header>
-      <img src="/unity-run/assets/zsb-logo.jpg" alt="ZSB North 24 Parganas" />
-      <h1>Zila Sainik Board, North 24 Parganas</h1>
-    </header>
-    <div class="sites">
-      <a class="card" href="/unity-run/">
-        <div class="name">Unity Run 2026</div>
-        <div class="desc">10K &amp; 6K timed runs and a 4K walk — Barasat Stadium, 20 September 2026. Registration open.</div>
-      </a>
-    </div>
-  </div>
-</body>
-</html>`);
+  res.redirect('/unity-run/');
 });
 
 // Live registration counters. Socket.IO sits on the raw HTTP server (it

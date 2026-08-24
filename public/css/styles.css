@@ -128,6 +128,45 @@ nav.links .nav-links-register { display: none; }
 .hero-top { text-align: center; padding-top: 56px; padding-bottom: 10px; }
 .hero-logo { max-width: 380px; width: 100%; margin: 0 auto; }
 
+/* Live registration counters — the first thing visible below the logo,
+   deliberately above the fold rather than buried further down the page. */
+.hero-counters {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 18px 0 34px;
+}
+.hero-counter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--red);
+  background: var(--sky-pale);
+  padding: 10px 16px;
+}
+.hero-counter .flip-group { perspective: 200px; gap: 3px; }
+.hero-counter .flip-cell {
+  width: 24px; height: 32px;
+  background: var(--navy); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-family: Arial, system-ui, sans-serif; font-weight: 700; font-size: 1.15rem;
+  font-variant-numeric: tabular-nums;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.hero-counter-label {
+  font-family: Arial, system-ui, sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  max-width: 70px;
+  line-height: 1.3;
+}
+
 .hero-grid {
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
@@ -190,8 +229,8 @@ h1.headline .accent { color: var(--red); font-style: italic; }
 .cat .name { margin-top: 10px; font-size: 0.94rem; color: var(--ink-soft); }
 .cat .name.full-note { color: var(--red); font-weight: 700; }
 
-/* Live registration counters — a small digit-flip readout at the top of each category card */
-.cat-counter { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+/* Live registration counters — digit-flip readout. Base sizing here; the
+   hero strip (.hero-counters, above) overrides size/spacing for its context. */
 .flip-group { display: flex; gap: 3px; perspective: 200px; }
 .flip-cell {
   width: 20px; height: 27px;
@@ -202,7 +241,6 @@ h1.headline .accent { color: var(--red); font-style: italic; }
   transform-style: preserve-3d;
   will-change: transform;
 }
-.flip-label { font-family: Arial, system-ui, sans-serif; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
 
 /* ---------- ABOUT ---------- */
 .about { padding: 84px 0; }
