@@ -218,7 +218,6 @@ h1.headline {
 h1.headline .accent { color: var(--red); font-style: italic; }
 .sub { font-size: 1.02rem; line-height: 1.7; color: var(--ink-soft); max-width: 46ch; margin: 0 0 32px; }
 .hero-cta-row { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
-.hero-cta-row .hint { font-family: Arial, system-ui, sans-serif; font-size: 0.76rem; color: var(--ink-soft); }
 
 .bib {
   background: var(--paper);

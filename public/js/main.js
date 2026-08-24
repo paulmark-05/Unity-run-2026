@@ -269,18 +269,6 @@
       }
     });
 
-    const placesLeft = document.getElementById('placesLeft');
-    if (placesLeft) {
-      if (closed) {
-        placesLeft.textContent = `Registration closed on ${status.closesOn}.`;
-      } else {
-        const parts = [`Entries close ${status.closesOn}`];
-        if (run && run.count !== null) parts.push(`${Math.max(0, run.cap - run.count)} of ${run.cap} run places left`);
-        if (walk && walk.count !== null) parts.push(`${Math.max(0, walk.cap - walk.count)} of ${walk.cap} walk places left`);
-        placesLeft.textContent = parts.join(' · ');
-      }
-    }
-
     const everythingFull = run && walk && run.full && walk.full;
     if (!closed && !everythingFull) return;
 
