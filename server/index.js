@@ -12,7 +12,7 @@ app.use(express.json());
 
 // Everything for this event lives under /unity-run-2026, so zsb-barasat.in
 // can host multiple sites side by side — this one, plus the Visitor
-// Management System proxied in further down.
+// Management System, which runs as its own service at visitors.zsb-barasat.in.
 const site = express.Router();
 app.use('/unity-run-2026', site);
 
@@ -311,7 +311,7 @@ app.get('/', (req, res) => {
         <div class="name">Unity Run 2026</div>
         <div class="desc">10K &amp; 6K timed runs and a 4K walk — Barasat Stadium, 20 September 2026. Registration open.</div>
       </a>
-      <a class="card" href="/visitor-management-system/">
+      <a class="card" href="https://visitors.zsb-barasat.in/">
         <div class="name">Visitor Management System</div>
         <div class="desc">Visitor registration and tracking.</div>
       </a>
@@ -324,8 +324,8 @@ app.get('/', (req, res) => {
 // Live registration counters. Socket.IO sits on the raw HTTP server (it
 // isn't Express middleware), so it's given its own path under
 // /unity-run-2026 to match the rest of the site instead of claiming the
-// shared /socket.io root — the Visitor Management System can have its own
-// without colliding with this one.
+// shared /socket.io root — leaves room for another site to be mounted
+// here later without a path collision.
 const httpServer = http.createServer(app);
 const io = new SocketIOServer(httpServer, { path: '/unity-run-2026/socket.io' });
 

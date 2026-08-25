@@ -37,18 +37,21 @@ side, with a small portal at the root linking to each:
   `server/index.js`)
 - `zsb-barasat.in/unity-run-2026/` — this event, everything in `public/`,
   mounted as its own `express.Router()` at `/unity-run-2026`
-- `zsb-barasat.in/visitor-management-system/` (including `/admin`) — an
-  already-existing, separately hosted system. Not wired in yet — it needs a
-  reverse proxy rather than a router mount, since it's a different codebase
-  on a different host. See `VISITOR_SYSTEM_ORIGIN` below once that's added.
+- `visitors.zsb-barasat.in` — the Visitor Management System, an already-existing,
+  separately hosted app (its own codebase, its own Render service). It lives on
+  its own subdomain rather than a subpath of this domain, because its frontend
+  uses absolute paths (`/book`, `/admin/counters`, `/socket.io`, etc.) that would
+  break under a reverse proxy at a subpath. The portal just links out to it.
 
 To add another site that lives in *this* codebase, mount a new
 `express.Router()` the same way `site` is mounted at `/unity-run-2026`, and
-add a card to the portal route. To bring in another *external* system,
-follow the same proxy pattern used for the Visitor Management System.
-Frontend code must keep using relative paths (`assets/...`, `fetch('api/...')`,
-never a leading `/`) so it keeps working regardless of which path prefix
-it's mounted under.
+add a card to the portal route. To bring in another *external* system that
+also needs to sit at a subpath (rather than its own subdomain), you'd need a
+reverse proxy — but check its frontend for absolute paths first, since those
+break under a subpath mount.
+Frontend code in this repo must keep using relative paths (`assets/...`,
+`fetch('api/...')`, never a leading `/`) so it keeps working regardless of
+which path prefix it's mounted under.
 
 ## What you need before this goes live
 
