@@ -513,7 +513,7 @@
     .catch(() => {});
 
   if (window.io) {
-    const socket = window.io({ path: '/unity-run/socket.io' });
+    const socket = window.io({ path: '/unity-run-2026/socket.io' });
     socket.on('counts', applyCounts);
   }
 })();

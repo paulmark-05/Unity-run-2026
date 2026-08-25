@@ -26,25 +26,29 @@ cp .env.example .env   # then fill in the values, see below
 npm start
 ```
 
-The site runs at `http://localhost:3000/unity-run/`.
+The site runs at `http://localhost:3000/unity-run-2026/`.
 
 ## Multi-site layout
 
-This is meant to run under `zsb-barasat.com`, hosting more than one ZSB
-project side by side. Right now Unity Run is the only one live, so the root
-just redirects straight into it rather than showing a portal page in between:
+This runs under `zsb-barasat.in`, hosting more than one ZSB project side by
+side, with a small portal at the root linking to each:
 
-- `zsb-barasat.com/` → redirects to `/unity-run/` (see `app.get('/', ...)` at
-  the bottom of `server/index.js`)
-- `zsb-barasat.com/unity-run/` — this event, everything in `public/`
+- `zsb-barasat.in/` — portal page (see `app.get('/', ...)` at the bottom of
+  `server/index.js`)
+- `zsb-barasat.in/unity-run-2026/` — this event, everything in `public/`,
+  mounted as its own `express.Router()` at `/unity-run-2026`
+- `zsb-barasat.in/visitor-management-system/` (including `/admin`) — an
+  already-existing, separately hosted system. Not wired in yet — it needs a
+  reverse proxy rather than a router mount, since it's a different codebase
+  on a different host. See `VISITOR_SYSTEM_ORIGIN` below once that's added.
 
-To add another site later, mount a second `express.Router()` the same way
-`site` is mounted at `/unity-run` in `server/index.js`, and turn the root
-redirect back into a landing page linking to both (or move Unity Run's
-redirect target and put the new site at `/`, whichever should be the
-default). Frontend code must keep using relative paths (`assets/...`,
-`fetch('api/...')`, never a leading `/`) so it keeps working regardless of
-which path prefix it's mounted under.
+To add another site that lives in *this* codebase, mount a new
+`express.Router()` the same way `site` is mounted at `/unity-run-2026`, and
+add a card to the portal route. To bring in another *external* system,
+follow the same proxy pattern used for the Visitor Management System.
+Frontend code must keep using relative paths (`assets/...`, `fetch('api/...')`,
+never a leading `/`) so it keeps working regardless of which path prefix
+it's mounted under.
 
 ## What you need before this goes live
 
