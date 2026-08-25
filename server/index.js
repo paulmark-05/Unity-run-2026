@@ -97,12 +97,13 @@ site.get('/api/config', async (req, res) => {
 });
 
 const REQUIRED_FIELDS = [
-  'fullName', 'dob', 'gender', 'email', 'mobile',
+  'fullName', 'dob', 'gender', 'bloodGroup', 'email', 'mobile',
   'emergencyName', 'emergencyRelationship', 'emergencyNumber',
   'category', 'tshirtSize', 'signature',
 ];
 
 const PAYMENT_METHODS = ['UPI', 'Bank Transfer'];
+const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', "Don't know"];
 
 function validateRegistration(data) {
   for (const field of REQUIRED_FIELDS) {
@@ -111,6 +112,7 @@ function validateRegistration(data) {
     }
   }
   if (!FEES[data.category]) return 'Invalid category selected.';
+  if (!BLOOD_GROUPS.includes(data.bloodGroup)) return 'Invalid blood group selected.';
   if (!/^\S+@\S+\.\S+$/.test(data.email)) return 'Invalid email address.';
   if (!/^[0-9+\-\s]{7,15}$/.test(data.mobile)) return 'Invalid mobile number.';
 
@@ -199,6 +201,7 @@ site.post('/api/register', upload.single('paymentScreenshot'), async (req, res) 
       registration.fullName,
       registration.dob,
       registration.gender,
+      registration.bloodGroup,
       registration.email,
       registration.mobile,
       registration.emergencyName,

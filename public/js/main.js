@@ -122,6 +122,7 @@
       if (!getFieldValue('fullName')) return 'Please enter your full name.';
       if (!getFieldValue('dob')) return 'Please enter your date of birth.';
       if (!getFieldValue('gender')) return 'Please select a gender option.';
+      if (!getFieldValue('bloodGroup')) return 'Please select your blood group.';
       const email = getFieldValue('email');
       if (!/^\S+@\S+\.\S+$/.test(email)) return 'Please enter a valid email address.';
       const mobile = getFieldValue('mobile');
@@ -172,6 +173,7 @@
       fullName: getFieldValue('fullName'),
       dob: getFieldValue('dob'),
       gender: getFieldValue('gender'),
+      bloodGroup: getFieldValue('bloodGroup'),
       email: getFieldValue('email'),
       mobile: getFieldValue('mobile'),
       emergencyName: getFieldValue('emergencyName'),

@@ -58,7 +58,7 @@ Runners choose between UPI and bank transfer on the last step of the form.
 
 ### 2. Google Sheet (where registrations land)
 1. Create a new Google Sheet. Add a header row to the first tab, e.g.:
-   `Timestamp | Sl No | Registration ID | Full Name | DOB | Gender | Email | Mobile | Emergency Name | Emergency Relationship | Emergency Number | Category | T-Shirt Size | Fee | Payment Method | Transaction Ref / UTR | Payer UPI ID | Payer Account Name | Payer Account Number | Payer IFSC | Payment Screenshot | Payment Status | Waiver Accepted | Signature | Confirmation Sent`
+   `Timestamp | Sl No | Registration ID | Full Name | DOB | Gender | Blood Group | Email | Mobile | Emergency Name | Emergency Relationship | Emergency Number | Category | T-Shirt Size | Fee | Payment Method | Transaction Ref / UTR | Payer UPI ID | Payer Account Name | Payer Account Number | Payer IFSC | Payment Screenshot | Payment Status | Waiver Accepted | Signature | Confirmation Sent`
 2. In [Google Cloud Console](https://console.cloud.google.com/), create a project (or use an existing one), enable the **Google Sheets API**, and create a **Service Account**.
 3. Create a JSON key for that service account and download it.
 4. Share your Google Sheet with the service account's email address (found inside the JSON, field `client_email`) — give it **Editor** access.

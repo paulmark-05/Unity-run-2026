@@ -26,9 +26,9 @@ async function appendRegistration(row) {
 }
 
 // Column positions (0-based) within a data row, matching the sheet header:
-// ... K:Category(11) ... V:PaymentStatus(21)
-const COL_CATEGORY = 11;
-const COL_PAYMENT_STATUS = 21;
+// ... L:Category(12) ... W:PaymentStatus(22)
+const COL_CATEGORY = 12;
+const COL_PAYMENT_STATUS = 22;
 const CATEGORIES = ['10K', '6K', '4K'];
 const CONFIRMED_VALUES = new Set(['confirmed', 'verified', 'yes']);
 
