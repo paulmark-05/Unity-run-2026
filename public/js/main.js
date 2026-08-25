@@ -19,7 +19,7 @@
   ];
 
   let currentStep = 1;
-  let fees = { '10K': 500, '6K': 500, '4K': 350 };
+  let fees = { '10K': 600, '6K': 600, '4K': 350 };
   let upiVpa = null;
   let upiPayeeName = 'Unity Run 2026';
   let upiOrgId = '159020';
@@ -30,7 +30,7 @@
   // Cached so the bento tiles' progress bars can be redrawn from socket
   // "counts" pushes (frequent) without waiting on a fresh "registration"
   // status fetch (rare — only changes when a group fills or closes).
-  let groupCaps = { run: 300, walk: 200 };
+  let groupCaps = { run: 500, walk: 300 };
 
   function openModal() {
     modal.classList.add('open');
@@ -296,7 +296,7 @@
       return;
     }
     const category = getFieldValue('category');
-    const amount = fees[category] || 500;
+    const amount = fees[category] || 600;
 
     // Each fee has its own QR with that amount pre-filled.
     const qrImage = document.querySelector('.upi-qr img');
@@ -335,7 +335,7 @@
     summaryList.innerHTML = rows
       .map(([k, v]) => `<li><span>${k}</span><span>${escapeHtml(v || '—')}</span></li>`)
       .join('');
-    const fee = fees[data.category] || 500;
+    const fee = fees[data.category] || 600;
     feeAmount.textContent = `₹${fee}`;
   }
 

@@ -22,7 +22,7 @@ const QRCode = require('qrcode');
 const sharp = require('sharp');
 
 const REGISTER_URL = process.argv[2] || 'https://unity-run-2026.onrender.com';
-const FEE_RUN = 500;
+const FEE_RUN = 600;
 const FEE_WALK = 350;
 
 const NAVY = '#1B2260';

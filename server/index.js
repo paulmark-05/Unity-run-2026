@@ -18,19 +18,19 @@ app.use('/', site);
 
 site.use(express.static(path.join(__dirname, '..', 'public')));
 
-const FEES = { '10K': 500, '6K': 500, '4K': 350 };
+const FEES = { '10K': 600, '6K': 600, '4K': 350 };
 const CATEGORY_LABELS = {
   '10K': '10K Timed Run',
   '6K': '6K Timed Run',
-  '4K': '4K Walk',
+  '4K': '4K Fun Walk',
 };
 
 // Registration closes at the end of 12 September 2026, or once a category
 // group's slots are full — the 10K and 6K runs share one pool, the 4K walk
 // has its own.
 const REGISTRATION_CLOSES = new Date('2026-09-12T23:59:59+05:30');
-const RUN_CAP = 300; // 10K + 6K combined
-const WALK_CAP = 200; // 4K only
+const RUN_CAP = 500; // 10K + 6K combined
+const WALK_CAP = 300; // 4K only
 const GROUP_OF_CATEGORY = { '10K': 'run', '6K': 'run', '4K': 'walk' };
 
 async function registrationStatus() {
