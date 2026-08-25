@@ -10,11 +10,11 @@ const { uploadPaymentScreenshot, sendMail } = require('./drive');
 const app = express();
 app.use(express.json());
 
-// Everything for this event lives under /unity-run-2026, so zsb-barasat.in
-// can host multiple sites side by side — this one, plus the Visitor
-// Management System, which runs as its own service at visitors.zsb-barasat.in.
+// This service is dedicated to unity-run-2026.zsb-barasat.in, so it's
+// mounted at the root rather than under a path prefix. The Visitor
+// Management System runs as its own separate service/subdomain.
 const site = express.Router();
-app.use('/unity-run-2026', site);
+app.use('/', site);
 
 site.use(express.static(path.join(__dirname, '..', 'public')));
 
@@ -272,20 +272,10 @@ site.use((err, req, res, next) => {
   next();
 });
 
-// zsb-barasat.in root — no portal page for now. A combined landing page with
-// links to every ZSB site will replace this later; until then, root goes
-// straight to Unity Run 2026 so visitors never see an intermediate click.
-app.get('/', (req, res) => {
-  res.redirect('/unity-run-2026/');
-});
-
 // Live registration counters. Socket.IO sits on the raw HTTP server (it
-// isn't Express middleware), so it's given its own path under
-// /unity-run-2026 to match the rest of the site instead of claiming the
-// shared /socket.io root — leaves room for another site to be mounted
-// here later without a path collision.
+// isn't Express middleware), so it needs its own server before it can attach.
 const httpServer = http.createServer(app);
-const io = new SocketIOServer(httpServer, { path: '/unity-run-2026/socket.io' });
+const io = new SocketIOServer(httpServer);
 
 async function currentCounts() {
   const stats = await getRegistrationStats();

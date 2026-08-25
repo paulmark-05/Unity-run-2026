@@ -26,32 +26,23 @@ cp .env.example .env   # then fill in the values, see below
 npm start
 ```
 
-The site runs at `http://localhost:3000/unity-run-2026/`.
+The site runs at `http://localhost:3000/`.
 
 ## Multi-site layout
 
-This runs under `zsb-barasat.in`, hosting more than one ZSB project side by
-side, with a small portal at the root linking to each:
+Each ZSB site is its own Render service on its own subdomain of
+`zsb-barasat.in` — no path prefixes, no shared codebase:
 
-- `zsb-barasat.in/` — portal page (see `app.get('/', ...)` at the bottom of
-  `server/index.js`)
-- `zsb-barasat.in/unity-run-2026/` — this event, everything in `public/`,
-  mounted as its own `express.Router()` at `/unity-run-2026`
+- `unity-run-2026.zsb-barasat.in` — this event, everything in `public/`,
+  served from the root of this service
 - `visitors.zsb-barasat.in` — the Visitor Management System, an already-existing,
-  separately hosted app (its own codebase, its own Render service). It lives on
-  its own subdomain rather than a subpath of this domain, because its frontend
-  uses absolute paths (`/book`, `/admin/counters`, `/socket.io`, etc.) that would
-  break under a reverse proxy at a subpath. The portal just links out to it.
+  separately hosted app (its own codebase, its own Render service)
 
-To add another site that lives in *this* codebase, mount a new
-`express.Router()` the same way `site` is mounted at `/unity-run-2026`, and
-add a card to the portal route. To bring in another *external* system that
-also needs to sit at a subpath (rather than its own subdomain), you'd need a
-reverse proxy — but check its frontend for absolute paths first, since those
-break under a subpath mount.
-Frontend code in this repo must keep using relative paths (`assets/...`,
-`fetch('api/...')`, never a leading `/`) so it keeps working regardless of
-which path prefix it's mounted under.
+Each is a fully independent Render service with its own custom domain, so
+there's no router mounting or reverse proxying between them to worry about.
+Frontend code in this repo uses relative paths (`assets/...`, `fetch('api/...')`,
+never a leading `/`) as a matter of habit, not because it's required by the
+current layout.
 
 ## What you need before this goes live
 
