@@ -109,7 +109,35 @@ emails use — set a row to `Confirmed` and the counter picks it up within
 No extra setup needed beyond what's already above; it uses the same Google
 Sheet and Apps Script deployment as everything else on this page.
 
-### 7. Deploy to Render
+### 7. Photo gallery
+Each year gets its own folder under `public/assets/gallery/<year>/`, populated
+from a shared Google Drive folder (needs only "Anyone with the link can
+view" — no need to add the service account as a collaborator):
+
+```bash
+npm run gallery -- 2025 <drive-folder-id>
+```
+
+This downloads every image in that folder, re-encodes it for the web (full
+size + thumbnail) and writes `manifest.json`. Commit the resulting folder
+and redeploy — the gallery has no Drive dependency at runtime, it just
+serves whatever's checked in. Re-run the same command any time the source
+folder changes to resync (it overwrites that year's files each time).
+
+### 8. Results
+Results only apply to the timed 10K/6K (the 4K walk is untimed, no
+rankings). Fill in the **Results** tab of the same Google Sheet after the
+event — columns are `Year | Category | Gender | Rank | Bib No | Name |
+Finish Time`. Format the Finish Time column as **Plain Text** before typing
+into it, or Sheets will reformat values like `00:35:12` and drop the
+leading zero.
+
+The site reads this tab live (`GET /api/results`), no redeploy needed. A
+year with no rows for a category shows "Result will be published after
+completion of the event"; once rows exist, it shows the top 2 male/female
+finishers per category followed by the full sorted results table.
+
+### 9. Deploy to Render
 1. Push this repo to GitHub (already done if you're reading this from the repo).
 2. On [render.com](https://render.com), create a **New Web Service**, connect the `Unity-run-2026` GitHub repo.
 3. Build command: `npm install`. Start command: `npm start`.
