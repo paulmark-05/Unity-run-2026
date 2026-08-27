@@ -3,7 +3,7 @@
 Event website and registration system for Unity Run 2026 — Barasat Stadium, 27 September 2026. Organized by ZSB North 24 Parganas.
 
 - Static landing page (`public/`)
-- 4-step registration form (Personal Details → Run Preferences → Waiver → Payment)
+- 4-step registration form (Personal Details → Run Preferences → Disclaimer → Payment)
 - Payment by UPI QR or bank transfer — runners pay, then submit the account they paid from and a screenshot as proof
 - 10K and 6K timed runs (₹600) with separate men's and women's prizes, and a 4K fun walk (₹350)
 - Provisional receipt on registration; final confirmation email once an organizer verifies the payment
@@ -121,4 +121,4 @@ Sheet and Apps Script deployment as everything else on this page.
 - Payment is **not** automatically verified. Every registration lands in the sheet as `Pending verification`; an organizer opens the linked screenshot, matches the transaction reference against the bank/UPI statement, and updates that cell to `Confirmed` — this also feeds the live counters and triggers the final confirmation email. Budget time for this before the event.
 - Screenshot uploads are capped at 5 MB and must be image files.
 - The "tap to pay" QR link uses a `upi://` deep link, which only opens an app on mobile devices. On desktop, runners scan the QR with their phone instead.
-- The payment step also requires a voluntary-participation liability declaration, separate from the fitness waiver in Section 3. Payment fields stay visible but are disabled until it's checked.
+- The payment step also requires a voluntary-participation liability declaration, separate from the fitness disclaimer in Section 3. Payment fields stay visible but are disabled until it's checked.

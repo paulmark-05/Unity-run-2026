@@ -14,7 +14,7 @@
   const STEP_TITLES = [
     'SECTION 1 OF 4 · PERSONAL DETAILS',
     'SECTION 2 OF 4 · RUN & EVENT PREFERENCES',
-    'SECTION 3 OF 4 · DECLARATION & WAIVER',
+    'SECTION 3 OF 4 · DECLARATION & DISCLAIMER',
     'SECTION 4 OF 4 · REVIEW & PAYMENT',
   ];
 
@@ -91,6 +91,7 @@
       showPaymentBlocks();
       updatePaymentGate();
     } else {
+      nextBtn.disabled = false;
       nextBtn.append('Continue ');
       nextBtn.append(arrow);
     }
@@ -136,7 +137,7 @@
       if (!getFieldValue('tshirtSize')) return 'Please select a T-shirt size.';
     }
     if (n === 3) {
-      if (!getFieldValue('waiverAccepted')) return 'You must agree to the participant waiver to continue.';
+      if (!getFieldValue('waiverAccepted')) return 'You must agree to the participant disclaimer to continue.';
       if (!getFieldValue('signature')) return 'Please type your full name as digital consent.';
     }
     if (n === 4) {
