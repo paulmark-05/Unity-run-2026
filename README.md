@@ -1,6 +1,6 @@
 # Unity Run 2026
 
-Event website and registration system for Unity Run 2026 — Barasat Stadium, 20 September 2026. Organized by ZSB North 24 Parganas.
+Event website and registration system for Unity Run 2026 — Barasat Stadium, 27 September 2026. Organized by ZSB North 24 Parganas.
 
 - Static landing page (`public/`)
 - 4-step registration form (Personal Details → Run Preferences → Waiver → Payment)

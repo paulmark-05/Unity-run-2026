@@ -29,12 +29,12 @@ const COL = {
   slNo: 2,
   registrationId: 3,
   fullName: 4,
-  email: 7,
-  category: 12,
-  tshirt: 13,
-  fee: 14,
-  paymentStatus: 22,
-  confirmationSent: 25,
+  email: 8,
+  category: 13,
+  tshirt: 14,
+  fee: 15,
+  paymentStatus: 23,
+  confirmationSent: 26,
 };
 
 function doPost(e) {
@@ -105,7 +105,7 @@ function sendPendingConfirmations() {
       'T-shirt size: ' + tshirt,
       '',
       'Event details',
-      '  Date:     Sunday, 20 September 2026',
+      '  Date:     Sunday, 27 September 2026',
       '  Venue:    Barasat Stadium',
       '  Flag-off: 6:00 AM sharp (10K), followed by the 6K',
       '  Report:   Please arrive by 5:30 AM to collect your bib',

@@ -139,7 +139,7 @@ function landscape(w, h, qr, photo) {
     size: 23 * u, weight: 700, fill: SKY, spacing: 4 * u,
   }));
   y += 62 * u;
-  p.push(text('20 SEPTEMBER 2026', pad, y, {
+  p.push(text('27 SEPTEMBER 2026', pad, y, {
     size: 60 * u, family: DISPLAY, weight: 700, fill: PAPER,
   }));
   y += 42 * u;
@@ -183,7 +183,7 @@ function stacked(w, h, qr, photo) {
     size: 24 * u, weight: 700, fill: SKY, anchor: 'middle', spacing: 4 * u,
   }));
   y += 88 * u;
-  p.push(text('20 SEPTEMBER 2026', cx, y, {
+  p.push(text('27 SEPTEMBER 2026', cx, y, {
     size: 66 * u, family: DISPLAY, weight: 700, fill: PAPER, anchor: 'middle',
   }));
   y += 48 * u;

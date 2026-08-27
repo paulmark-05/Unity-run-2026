@@ -247,7 +247,7 @@ site.post('/api/register', upload.single('paymentScreenshot'), async (req, res) 
           'bank records and a final confirmation will be emailed to you within 2',
           'working days. Please keep this email until then.',
           '',
-          'Event: Sunday, 20 September 2026, Barasat Stadium. Flag-off 6:00 AM.',
+          'Event: Sunday, 27 September 2026, Barasat Stadium. Flag-off 6:00 AM.',
           '',
           'Zila Sainik Board, North 24 Parganas',
         ].join('\n'),
