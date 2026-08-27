@@ -20,10 +20,13 @@
       </div>
     </div>
     <nav class="links sans" id="navLinks">
+      <button class="nav-drawer-close" id="navDrawerClose" type="button" aria-label="Close menu">×</button>
       <a href="#about">About</a>
       <a href="#categories">Categories</a>
       <a href="#prizes">Prizes</a>
       <a href="#details">Details</a>
+      <a href="#photos">Photos</a>
+      <a href="#results">Results</a>
       <button class="btn btn-primary nav-links-register js-open-register">Register Now</button>
     </nav>
     <div class="header-actions">
@@ -33,6 +36,7 @@
       </button>
     </div>
   </div>
+  <div class="nav-overlay" id="navOverlay"></div>
 </header>
 
 <section class="hero">
@@ -159,6 +163,37 @@
   </div>
 </section>
 
+<section class="gallery" id="photos">
+  <div class="wrap">
+    <span class="kicker label">Memories</span>
+    <h2 class="section-title">Unity Run, year after year</h2>
+    <p class="gallery-intro body-text">A look back at previous editions — more photos are added here after every event.</p>
+    <div class="year-tabs" id="galleryYearTabs"></div>
+    <div class="carousel" id="galleryCarousel" hidden>
+      <div class="carousel-frame" id="carouselFrame">
+        <img class="carousel-bg" id="carouselBg" src="" alt="" aria-hidden="true" />
+        <img class="carousel-img" id="carouselImg" src="" alt="" />
+        <button class="carousel-arrow carousel-prev" id="carouselPrev" type="button" aria-label="Previous photo">‹</button>
+        <button class="carousel-arrow carousel-next" id="carouselNext" type="button" aria-label="Next photo">›</button>
+        <div class="carousel-counter" id="carouselCounter"></div>
+        <div class="carousel-progress" id="carouselProgress"></div>
+      </div>
+      <div class="carousel-thumbs" id="carouselThumbs"></div>
+    </div>
+    <p class="gallery-empty" id="galleryEmpty" hidden>Photos will be added here soon.</p>
+  </div>
+</section>
+
+<section class="results" id="results">
+  <div class="wrap">
+    <span class="kicker label">Results</span>
+    <h2 class="section-title">Race results</h2>
+    <p class="results-intro body-text">Results are shown for the timed 10K and 6K runs — the 4K walk is untimed, with no rankings.</p>
+    <div class="year-tabs" id="resultsYearTabs"></div>
+    <div id="resultsBody"></div>
+  </div>
+</section>
+
 <footer class="site">
   <div class="wrap">
     <div class="foot-brand">
@@ -171,7 +206,6 @@
     <div class="foot-row">
       <div>© 2026 Unity Run · Barasat Stadium · Sunday, 27 September 2026</div>
       <div class="sans">
-        <a href="mailto:zsbbarasat@gmail.com">zsbbarasat@gmail.com</a> ·
         <a href="mailto:rsb.wb01@gmail.com">rsb.wb01@gmail.com</a>
       </div>
     </div>
@@ -433,6 +467,21 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ============ PHOTO LIGHTBOX ============ -->
+<div class="lightbox-overlay" id="lightboxOverlay">
+  <button class="lightbox-close" id="lightboxClose" type="button" aria-label="Close photo">×</button>
+  <button class="lightbox-arrow lightbox-prev" id="lightboxPrev" type="button" aria-label="Previous photo">‹</button>
+  <button class="lightbox-arrow lightbox-next" id="lightboxNext" type="button" aria-label="Next photo">›</button>
+  <div class="lightbox-stage">
+    <img class="lightbox-img" id="lightboxImg" src="" alt="" />
+    <div class="lightbox-tag" id="lightboxTag"></div>
+  </div>
+  <div class="lightbox-actions">
+    <button class="btn btn-outline lightbox-btn" id="lightboxDownload" type="button">Download</button>
+    <button class="btn btn-primary lightbox-btn" id="lightboxShare" type="button">Share</button>
   </div>
 </div>
 

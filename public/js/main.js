@@ -434,19 +434,25 @@
     if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
   });
 
-  // Mobile nav dropdown
+  // Mobile nav — a side drawer with a dimmed backdrop.
   const navToggle = document.getElementById('navToggle');
   const navLinks = document.getElementById('navLinks');
+  const navOverlay = document.getElementById('navOverlay');
+  const navDrawerClose = document.getElementById('navDrawerClose');
   if (navToggle && navLinks) {
     const closeNav = () => {
       navLinks.classList.remove('open');
       navToggle.setAttribute('aria-expanded', 'false');
+      if (navOverlay) navOverlay.classList.remove('open');
     };
     navToggle.addEventListener('click', () => {
       const isOpen = navLinks.classList.toggle('open');
       navToggle.setAttribute('aria-expanded', String(isOpen));
+      if (navOverlay) navOverlay.classList.toggle('open', isOpen);
     });
-    // Anchor links and the Register button both close the dropdown behind them.
+    if (navDrawerClose) navDrawerClose.addEventListener('click', closeNav);
+    if (navOverlay) navOverlay.addEventListener('click', closeNav);
+    // Anchor links and the Register button both close the drawer behind them.
     navLinks.querySelectorAll('a, button').forEach((el) => el.addEventListener('click', closeNav));
     document.addEventListener('click', (e) => {
       if (navLinks.classList.contains('open') && !navLinks.contains(e.target) && e.target !== navToggle) {
@@ -519,4 +525,437 @@
     const socket = window.io();
     socket.on('counts', applyCounts);
   }
+
+  // ---------- Photo gallery ----------
+  (function initGallery() {
+    const yearTabsEl = document.getElementById('galleryYearTabs');
+    const carouselEl = document.getElementById('galleryCarousel');
+    const emptyEl = document.getElementById('galleryEmpty');
+    const frameEl = document.getElementById('carouselFrame');
+    const bgEl = document.getElementById('carouselBg');
+    const imgEl = document.getElementById('carouselImg');
+    const counterEl = document.getElementById('carouselCounter');
+    const progressEl = document.getElementById('carouselProgress');
+    const thumbsEl = document.getElementById('carouselThumbs');
+    const prevBtn = document.getElementById('carouselPrev');
+    const nextBtn = document.getElementById('carouselNext');
+    if (!yearTabsEl) return;
+
+    const AUTOPLAY_MS = 4500;
+    const FADE_MS = 400;
+    let galleries = [];
+    let activeYear = null;
+    let activeIndex = 0;
+    let autoplayTimer = null;
+    let fadeTimer = null;
+    let hovering = false;
+
+    function photosForYear(year) {
+      const g = galleries.find((gal) => gal.year === year);
+      return g ? g.photos : [];
+    }
+
+    function stopProgress() {
+      progressEl.style.transition = 'none';
+      progressEl.style.width = '0%';
+    }
+
+    function runProgress() {
+      stopProgress();
+      // Force a reflow so the browser registers the 0% width before the
+      // transition below starts — otherwise it never animates from 0.
+      void progressEl.offsetWidth;
+      progressEl.style.transition = `width ${AUTOPLAY_MS}ms linear`;
+      progressEl.style.width = '100%';
+    }
+
+    function stopAutoplay() {
+      if (autoplayTimer) clearInterval(autoplayTimer);
+      autoplayTimer = null;
+      stopProgress();
+    }
+
+    function startAutoplay() {
+      stopAutoplay();
+      if (hovering) return;
+      const photos = photosForYear(activeYear);
+      if (photos.length < 2) return;
+      runProgress();
+      autoplayTimer = setInterval(() => showPhoto(activeIndex + 1), AUTOPLAY_MS);
+    }
+
+    // A short crossfade: fade the current photo + its blurred backdrop out,
+    // swap the src underneath while invisible, then fade back in. Keeps the
+    // transition feeling deliberate instead of a jarring instant swap.
+    function showPhoto(index) {
+      const photos = photosForYear(activeYear);
+      if (!photos.length) return;
+      activeIndex = ((index % photos.length) + photos.length) % photos.length;
+      const photo = photos[activeIndex];
+
+      if (fadeTimer) clearTimeout(fadeTimer);
+      frameEl.classList.add('fading');
+      fadeTimer = setTimeout(() => {
+        const src = `assets/gallery/${activeYear}/${photo.file}`;
+        imgEl.src = src;
+        bgEl.src = src;
+        imgEl.alt = `Unity Run ${activeYear} photo ${activeIndex + 1}`;
+        frameEl.classList.remove('fading');
+      }, FADE_MS);
+
+      counterEl.textContent = `${activeIndex + 1} / ${photos.length}`;
+      thumbsEl.querySelectorAll('.carousel-thumb').forEach((t, i) => {
+        t.classList.toggle('active', i === activeIndex);
+      });
+    }
+
+    function renderCarousel(year) {
+      activeYear = year;
+      const photos = photosForYear(year);
+      if (!photos.length) {
+        carouselEl.hidden = true;
+        emptyEl.hidden = false;
+        stopAutoplay();
+        return;
+      }
+      carouselEl.hidden = false;
+      emptyEl.hidden = true;
+      thumbsEl.innerHTML = photos
+        .map((p, i) => `<img class="carousel-thumb" src="assets/gallery/${year}/${p.thumb}" alt="" data-index="${i}" />`)
+        .join('');
+      thumbsEl.querySelectorAll('.carousel-thumb').forEach((t) => {
+        t.addEventListener('click', () => {
+          showPhoto(Number(t.dataset.index));
+          startAutoplay();
+        });
+      });
+      activeIndex = 0;
+      const first = photos[0];
+      const firstSrc = `assets/gallery/${year}/${first.file}`;
+      imgEl.src = firstSrc;
+      bgEl.src = firstSrc;
+      imgEl.alt = `Unity Run ${year} photo 1`;
+      counterEl.textContent = `1 / ${photos.length}`;
+      thumbsEl.querySelectorAll('.carousel-thumb').forEach((t, i) => t.classList.toggle('active', i === 0));
+      startAutoplay();
+    }
+
+    function renderYearTabs() {
+      yearTabsEl.innerHTML = galleries
+        .map((g, i) => `<button type="button" class="year-tab${i === 0 ? ' active' : ''}" data-year="${g.year}">${g.year}</button>`)
+        .join('');
+      yearTabsEl.querySelectorAll('.year-tab').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          yearTabsEl.querySelectorAll('.year-tab').forEach((b) => b.classList.remove('active'));
+          btn.classList.add('active');
+          renderCarousel(btn.dataset.year);
+        });
+      });
+    }
+
+    if (prevBtn) prevBtn.addEventListener('click', () => { showPhoto(activeIndex - 1); startAutoplay(); });
+    if (nextBtn) nextBtn.addEventListener('click', () => { showPhoto(activeIndex + 1); startAutoplay(); });
+
+    if (frameEl) {
+      // Hovering pauses autoplay (and hides the countdown) rather than just
+      // resetting it, so lingering over a photo never feels like fighting the timer.
+      frameEl.addEventListener('mouseenter', () => { hovering = true; stopAutoplay(); });
+      frameEl.addEventListener('mouseleave', () => { hovering = false; startAutoplay(); });
+
+      // Left/right arrow keys navigate while the pointer is over the frame —
+      // scoped this way so they never fight the registration modal's own
+      // inputs elsewhere on the page.
+      frameEl.setAttribute('tabindex', '0');
+      frameEl.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') { showPhoto(activeIndex - 1); startAutoplay(); }
+        if (e.key === 'ArrowRight') { showPhoto(activeIndex + 1); startAutoplay(); }
+      });
+
+      // Touch swipe: a horizontal drag past the threshold moves one photo;
+      // anything shorter is treated as a tap/scroll and ignored.
+      let touchStartX = null;
+      frameEl.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }, { passive: true });
+      frameEl.addEventListener('touchend', (e) => {
+        if (touchStartX === null) return;
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        touchStartX = null;
+        if (Math.abs(dx) < 40) return;
+        if (dx < 0) { showPhoto(activeIndex + 1); startAutoplay(); }
+        else { showPhoto(activeIndex - 1); startAutoplay(); }
+      });
+    }
+
+    // ---------- Lightbox: full photo, no crop, download/share with a tag ----------
+    const lightboxOverlay = document.getElementById('lightboxOverlay');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const lightboxTag = document.getElementById('lightboxTag');
+    const lightboxClose = document.getElementById('lightboxClose');
+    const lightboxPrev = document.getElementById('lightboxPrev');
+    const lightboxNext = document.getElementById('lightboxNext');
+    const lightboxDownload = document.getElementById('lightboxDownload');
+    const lightboxShare = document.getElementById('lightboxShare');
+
+    // Jumps straight to a photo — no crossfade, since the carousel sits
+    // hidden behind the lightbox at this point. Keeps the carousel (counter,
+    // active thumbnail, current image) in sync so closing the lightbox never
+    // shows something different from what was just being viewed.
+    function lightboxGoTo(index) {
+      const photos = photosForYear(activeYear);
+      if (!photos.length) return;
+      activeIndex = ((index % photos.length) + photos.length) % photos.length;
+      const photo = photos[activeIndex];
+      const src = `assets/gallery/${activeYear}/${photo.file}`;
+      imgEl.src = src;
+      bgEl.src = src;
+      imgEl.alt = `Unity Run ${activeYear} photo ${activeIndex + 1}`;
+      counterEl.textContent = `${activeIndex + 1} / ${photos.length}`;
+      thumbsEl.querySelectorAll('.carousel-thumb').forEach((t, i) => t.classList.toggle('active', i === activeIndex));
+      lightboxImg.src = src;
+      lightboxImg.alt = imgEl.alt;
+      lightboxTag.textContent = `Unity Run ${activeYear}`;
+    }
+
+    function openLightbox() {
+      hovering = true;
+      stopAutoplay();
+      lightboxGoTo(activeIndex);
+      lightboxOverlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      lightboxOverlay.classList.remove('open');
+      document.body.style.overflow = '';
+      hovering = false;
+      startAutoplay();
+    }
+
+    function loadImageEl(src) {
+      return new Promise((resolve, reject) => {
+        const im = new Image();
+        im.onload = () => resolve(im);
+        im.onerror = reject;
+        im.src = src;
+      });
+    }
+
+    // Draws the current photo onto a canvas with a small "UNITY RUN <year>"
+    // label stamped in the bottom-left, so the branding travels with the
+    // file wherever it's downloaded or shared to.
+    async function buildTaggedImageBlob() {
+      const photos = photosForYear(activeYear);
+      const photo = photos[activeIndex];
+      const src = `assets/gallery/${activeYear}/${photo.file}`;
+      const im = await loadImageEl(src);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = im.naturalWidth;
+      canvas.height = im.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(im, 0, 0);
+
+      const label = `UNITY RUN ${activeYear}`;
+      const fontSize = Math.max(18, Math.round(canvas.width * 0.026));
+      const letterSpacing = fontSize * 0.12;
+      const paddingX = Math.round(fontSize * 0.9);
+      const paddingY = Math.round(fontSize * 0.65);
+      const margin = Math.round(canvas.width * 0.035);
+
+      ctx.font = `700 ${fontSize}px Arial, sans-serif`;
+      ctx.textBaseline = 'middle';
+      let textWidth = 0;
+      for (const ch of label) textWidth += ctx.measureText(ch).width + letterSpacing;
+      textWidth -= letterSpacing;
+
+      const tagWidth = textWidth + paddingX * 2;
+      const tagHeight = fontSize + paddingY * 2;
+      const tagX = margin;
+      const tagY = canvas.height - margin - tagHeight;
+
+      ctx.fillStyle = '#1B2260';
+      ctx.fillRect(tagX, tagY, tagWidth, tagHeight);
+
+      ctx.fillStyle = '#FFFFFF';
+      let cursorX = tagX + paddingX;
+      const textY = tagY + tagHeight / 2 + fontSize * 0.02;
+      for (const ch of label) {
+        ctx.fillText(ch, cursorX, textY);
+        cursorX += ctx.measureText(ch).width + letterSpacing;
+      }
+
+      return new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    }
+
+    if (imgEl) imgEl.addEventListener('click', openLightbox);
+    if (lightboxClose) lightboxClose.addEventListener('click', closeLightbox);
+    if (lightboxOverlay) {
+      lightboxOverlay.addEventListener('click', (e) => {
+        if (e.target === lightboxOverlay) closeLightbox();
+      });
+    }
+    if (lightboxPrev) lightboxPrev.addEventListener('click', () => lightboxGoTo(activeIndex - 1));
+    if (lightboxNext) lightboxNext.addEventListener('click', () => lightboxGoTo(activeIndex + 1));
+    document.addEventListener('keydown', (e) => {
+      if (!lightboxOverlay || !lightboxOverlay.classList.contains('open')) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') lightboxGoTo(activeIndex - 1);
+      if (e.key === 'ArrowRight') lightboxGoTo(activeIndex + 1);
+    });
+
+    if (lightboxDownload) {
+      lightboxDownload.addEventListener('click', async () => {
+        lightboxDownload.disabled = true;
+        try {
+          const blob = await buildTaggedImageBlob();
+          downloadBlob(blob, `unity-run-${activeYear}-${String(activeIndex + 1).padStart(2, '0')}.jpg`);
+        } catch (err) {
+          console.error('download failed:', err.message);
+        } finally {
+          lightboxDownload.disabled = false;
+        }
+      });
+    }
+
+    if (lightboxShare) {
+      lightboxShare.addEventListener('click', async () => {
+        lightboxShare.disabled = true;
+        try {
+          const blob = await buildTaggedImageBlob();
+          const filename = `unity-run-${activeYear}-${String(activeIndex + 1).padStart(2, '0')}.jpg`;
+          const file = new File([blob], filename, { type: 'image/jpeg' });
+          const shareText = `Unity Run ${activeYear} — Zila Sainik Board, North 24 Parganas`;
+
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: `Unity Run ${activeYear}`, text: shareText });
+          } else if (navigator.share) {
+            // Browser can share text/links but not files — still better than nothing.
+            await navigator.share({ title: `Unity Run ${activeYear}`, text: shareText, url: window.location.href });
+          } else {
+            // No Web Share API at all (most desktop browsers) — download instead.
+            downloadBlob(blob, filename);
+          }
+        } catch (err) {
+          // AbortError just means the user closed the native share sheet.
+          if (err.name !== 'AbortError') console.error('share failed:', err.message);
+        } finally {
+          lightboxShare.disabled = false;
+        }
+      });
+    }
+
+    fetch('api/gallery')
+      .then((r) => r.json())
+      .then((data) => {
+        galleries = data.galleries || [];
+        if (!galleries.length) {
+          yearTabsEl.hidden = true;
+          emptyEl.hidden = false;
+          return;
+        }
+        renderYearTabs();
+        renderCarousel(galleries[0].year);
+      })
+      .catch(() => {
+        emptyEl.hidden = false;
+      });
+  })();
+
+  // ---------- Results ----------
+  (function initResults() {
+    const yearTabsEl = document.getElementById('resultsYearTabs');
+    const bodyEl = document.getElementById('resultsBody');
+    if (!yearTabsEl || !bodyEl) return;
+
+    let results = [];
+    const RESULT_CATEGORY_LABELS = { '10K': '10K Timed Run', '6K': '6K Timed Run' };
+    const NOT_PUBLISHED_HTML = '<p class="results-notice">Result will be published after completion of the event.</p>';
+
+    function winnerRow(entry, place) {
+      if (!entry) {
+        return `<div class="winner-row"><span><span class="place">${place}.</span>—</span></div>`;
+      }
+      const bib = entry.bib ? ` <span class="sans">(Bib ${escapeHtml(entry.bib)})</span>` : '';
+      return `<div class="winner-row"><span><span class="place">${place}.</span>${escapeHtml(entry.name || '—')}${bib}</span><span class="time">${escapeHtml(entry.time || '')}</span></div>`;
+    }
+
+    function renderYear(year) {
+      const yearData = results.find((r) => r.year === year);
+      if (!yearData || !yearData.published) {
+        bodyEl.innerHTML = NOT_PUBLISHED_HTML;
+        return;
+      }
+
+      const sections = Object.entries(yearData.categories).map(([category, data]) => {
+        const label = RESULT_CATEGORY_LABELS[category] || category;
+        const winners = data.prizeWinners;
+        const rows = data.fullResults
+          .map(
+            (r) =>
+              `<tr><td>${r.rank ?? ''}</td><td>${escapeHtml(r.bib || '')}</td><td>${escapeHtml(r.name || '')}</td><td>${escapeHtml(r.gender || '')}</td><td>${escapeHtml(r.time || '')}</td></tr>`
+          )
+          .join('');
+
+        return `
+          <div class="results-category">
+            <h3>${label}</h3>
+            <div class="winners-grid">
+              <div class="winner-group">
+                <h4>Male</h4>
+                ${winnerRow(winners.male[0], 1)}
+                ${winnerRow(winners.male[1], 2)}
+              </div>
+              <div class="winner-group">
+                <h4>Female</h4>
+                ${winnerRow(winners.female[0], 1)}
+                ${winnerRow(winners.female[1], 2)}
+              </div>
+            </div>
+            <div class="results-table-wrap">
+              <table class="results-table">
+                <thead><tr><th>Rank</th><th>Bib</th><th>Name</th><th>Gender</th><th>Time</th></tr></thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+          </div>`;
+      });
+
+      bodyEl.innerHTML = sections.join('') || NOT_PUBLISHED_HTML;
+    }
+
+    function renderYearTabs() {
+      yearTabsEl.innerHTML = results
+        .map((r, i) => `<button type="button" class="year-tab${i === 0 ? ' active' : ''}" data-year="${r.year}">${r.year}</button>`)
+        .join('');
+      yearTabsEl.querySelectorAll('.year-tab').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          yearTabsEl.querySelectorAll('.year-tab').forEach((b) => b.classList.remove('active'));
+          btn.classList.add('active');
+          renderYear(btn.dataset.year);
+        });
+      });
+    }
+
+    fetch('api/results')
+      .then((r) => r.json())
+      .then((data) => {
+        results = data.results || [];
+        if (!results.length) return;
+        renderYearTabs();
+        renderYear(results[0].year);
+      })
+      .catch(() => {
+        bodyEl.innerHTML = NOT_PUBLISHED_HTML;
+      });
+  })();
 })();

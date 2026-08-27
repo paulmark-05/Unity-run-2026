@@ -1,10 +1,11 @@
 require('dotenv').config();
+const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const express = require('express');
 const multer = require('multer');
 const { Server: SocketIOServer } = require('socket.io');
-const { appendRegistration, getRegistrationStats } = require('./sheets');
+const { appendRegistration, getRegistrationStats, getResultRows } = require('./sheets');
 const { uploadPaymentScreenshot, sendMail } = require('./drive');
 
 const app = express();
@@ -94,6 +95,82 @@ site.get('/api/config', async (req, res) => {
       branch: process.env.BANK_BRANCH || '',
     },
   });
+});
+
+// Photos: one folder per year under public/assets/gallery/<year>/, each with
+// a manifest.json written by `npm run gallery`. No sheet/database involved —
+// adding a new year is just running that script and redeploying.
+const GALLERY_DIR = path.join(__dirname, '..', 'public', 'assets', 'gallery');
+
+site.get('/api/gallery', (req, res) => {
+  let years = [];
+  try {
+    years = fs
+      .readdirSync(GALLERY_DIR, { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .map((d) => d.name)
+      .sort((a, b) => b.localeCompare(a));
+  } catch (err) {
+    years = [];
+  }
+
+  const galleries = years
+    .map((year) => {
+      let photos = [];
+      try {
+        photos = JSON.parse(fs.readFileSync(path.join(GALLERY_DIR, year, 'manifest.json'), 'utf8'));
+      } catch (err) {
+        photos = [];
+      }
+      return { year, photos };
+    })
+    .filter((g) => g.photos.length > 0);
+
+  res.json({ galleries });
+});
+
+// Results: only the timed 10K/6K runs get a leaderboard — the 4K walk is
+// untimed and has no prizes. An organizer fills in the "Results" sheet tab
+// after the event; a year with no rows yet just shows as unpublished.
+const CURRENT_EVENT_YEAR = '2026';
+const RESULT_CATEGORIES = ['10K', '6K'];
+
+site.get('/api/results', async (req, res) => {
+  const rows = await getResultRows();
+
+  const byYear = {};
+  for (const row of rows) {
+    if (!byYear[row.year]) byYear[row.year] = [];
+    byYear[row.year].push(row);
+  }
+
+  const years = Array.from(new Set([CURRENT_EVENT_YEAR, ...Object.keys(byYear)])).sort((a, b) =>
+    b.localeCompare(a)
+  );
+
+  const results = years.map((year) => {
+    const yearRows = byYear[year] || [];
+    const categories = {};
+
+    for (const category of RESULT_CATEGORIES) {
+      const list = yearRows
+        .filter((r) => r.category === category)
+        .sort((a, b) => (a.rank || Infinity) - (b.rank || Infinity));
+      if (!list.length) continue;
+
+      categories[category] = {
+        fullResults: list,
+        prizeWinners: {
+          male: list.filter((r) => r.gender === 'Male').slice(0, 2),
+          female: list.filter((r) => r.gender === 'Female').slice(0, 2),
+        },
+      };
+    }
+
+    return { year, published: Object.keys(categories).length > 0, categories };
+  });
+
+  res.json({ results });
 });
 
 const REQUIRED_FIELDS = [

@@ -65,4 +65,40 @@ async function getRegistrationStats() {
   return { totalRows: rows.length, totalByCategory, confirmedByCategory };
 }
 
-module.exports = { appendRegistration, getRegistrationStats };
+const RESULTS_TAB = 'Results';
+
+/**
+ * Reads the Results tab: Year | Category | Gender | Rank | Bib No | Name | Finish Time.
+ * An organizer fills this in after the event — no row for a year means no
+ * results yet, which the site shows as "not published" for that year.
+ */
+async function getResultRows() {
+  const auth = getAuth();
+  const sheets = google.sheets({ version: 'v4', auth });
+  let rows;
+  try {
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: process.env.GOOGLE_SHEET_ID,
+      range: `${RESULTS_TAB}!A2:G`,
+    });
+    rows = res.data.values || [];
+  } catch (err) {
+    // Tab not created yet, or temporarily unreachable — treat as no results.
+    console.error('could not read results sheet:', err.message);
+    return [];
+  }
+
+  return rows
+    .filter((r) => r[0] && r[1]) // needs at least a year and a category
+    .map((r) => ({
+      year: String(r[0]).trim(),
+      category: String(r[1]).trim(),
+      gender: String(r[2] || '').trim(),
+      rank: Number(r[3]) || null,
+      bib: String(r[4] || '').trim(),
+      name: String(r[5] || '').trim(),
+      time: String(r[6] || '').trim(),
+    }));
+}
+
+module.exports = { appendRegistration, getRegistrationStats, getResultRows };
