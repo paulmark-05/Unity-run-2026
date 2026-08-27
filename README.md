@@ -93,7 +93,7 @@ To enable the final confirmation, add a trigger in the Apps Script editor:
 column so nobody is mailed twice.
 
 ### 5. Registration window
-Set in `server/index.js`: entries close end of **12 September 2026**. Slots are
+Set in `server/index.js`: entries close end of **19 September 2026**. Slots are
 capped per group, not site-wide — the 10K and 6K runs share one pool of
 **500**, the 4K walk has its own **300**. A full group disables just its own
 pills on the form (`RUN_CAP` / `WALK_CAP` / `GROUP_OF_CATEGORY` in

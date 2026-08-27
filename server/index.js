@@ -25,10 +25,10 @@ const CATEGORY_LABELS = {
   '4K': '4K Fun Walk',
 };
 
-// Registration closes at the end of 12 September 2026, or once a category
+// Registration closes at the end of 19 September 2026, or once a category
 // group's slots are full — the 10K and 6K runs share one pool, the 4K walk
 // has its own.
-const REGISTRATION_CLOSES = new Date('2026-09-12T23:59:59+05:30');
+const REGISTRATION_CLOSES = new Date('2026-09-19T23:59:59+05:30');
 const RUN_CAP = 500; // 10K + 6K combined
 const WALK_CAP = 300; // 4K only
 const GROUP_OF_CATEGORY = { '10K': 'run', '6K': 'run', '4K': 'walk' };
@@ -47,7 +47,7 @@ async function registrationStatus() {
 
   return {
     closedByDate,
-    closesOn: '12 September 2026',
+    closesOn: '19 September 2026',
     stats,
     groups: {
       run: { count: runCount, cap: RUN_CAP, full: runCount !== null && runCount >= RUN_CAP },
@@ -152,7 +152,7 @@ site.post('/api/register', upload.single('paymentScreenshot'), async (req, res) 
 
     const status = await registrationStatus();
     if (status.closedByDate) {
-      return res.status(409).json({ error: 'Registration closed on 12 September 2026.' });
+      return res.status(409).json({ error: 'Registration closed on 19 September 2026.' });
     }
     if (!openFor(status, registration.category)) {
       const group = GROUP_OF_CATEGORY[registration.category];
