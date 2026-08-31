@@ -107,7 +107,7 @@ function sendPendingConfirmations() {
       'Event details',
       '  Date:     Sunday, 27 September 2026',
       '  Venue:    Barasat Stadium',
-      '  Flag-off: 6:00 AM sharp for the 6K',
+      '  Flag-off: 6:00 AM for the 6K run, followed by the 4K walk',
       '  Report:   Please arrive by 5:30 AM to collect your bib',
       '',
       'Please bring this email and a photo ID to collect your bib and T-shirt.',

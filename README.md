@@ -5,7 +5,7 @@ Event website and registration system for Unity Run 2026 — Barasat Stadium, 27
 - Static landing page (`public/`)
 - 4-step registration form (Personal Details → Run Preferences → Disclaimer → Payment)
 - Payment by UPI QR or bank transfer — runners pay, then submit the account they paid from and a screenshot as proof
-- A 6K timed run (₹600) with separate men's and women's prizes, and a 4K fun walk (₹350)
+- A 6K timed run (₹500, early bird) with separate men's and women's prizes, and a 4K fun walk (₹300, early bird)
 - Provisional receipt on registration; final confirmation email once an organizer verifies the payment
 - Registrations are written to a Google Sheet; screenshots are uploaded to a Google Drive folder and linked from the sheet
 - Payments are verified manually by the organizers (each row lands as `Pending verification`)
@@ -51,7 +51,7 @@ Runners choose between UPI and bank transfer on the last step of the form.
 
 **UPI**
 1. `UPI_VPA` is the UPI ID being paid into (e.g. `someone@okaxis`), and `UPI_PAYEE_NAME` is the name shown in the runner's UPI app.
-2. `npm run qr` regenerates one QR per fee (`upi-qr-600.png`, `upi-qr-350.png`) with the amount baked in. Rerun whenever a fee changes.
+2. `npm run qr` regenerates one QR per fee (`upi-qr-500.png`, `upi-qr-300.png`) with the amount baked in. Rerun whenever a fee changes.
 
 **Bank transfer**
 3. Fill in `BANK_ACCOUNT_NAME`, `BANK_ACCOUNT_NUMBER`, `BANK_IFSC`, `BANK_NAME` and `BANK_BRANCH`. Anything left blank shows as "to be confirmed" on the form, so fill these in before going live.
@@ -145,7 +145,7 @@ finishers per category followed by the full sorted results table.
 5. Deploy. Render gives you a `https://unity-run-2026.onrender.com`-style URL; a custom domain can be attached later from the same dashboard.
 
 ## Notes
-- Entry fees: ₹600 for the 6K timed run, ₹350 for the 4K walk. Change the `FEES` object in `server/index.js`, then rerun `npm run qr` so the QR amounts match.
+- Entry fees: ₹500 for the 6K timed run, ₹300 for the 4K walk (early bird pricing, ₹100/₹50 off the regular ₹600/₹350). Change the `FEES` object in `server/index.js`, then rerun `npm run qr` so the QR amounts match.
 - Payment is **not** automatically verified. Every registration lands in the sheet as `Pending verification`; an organizer opens the linked screenshot, matches the transaction reference against the bank/UPI statement, and updates that cell to `Confirmed` — this also feeds the live counters and triggers the final confirmation email. Budget time for this before the event.
 - Screenshot uploads are capped at 5 MB and must be image files.
 - The "tap to pay" QR link uses a `upi://` deep link, which only opens an app on mobile devices. On desktop, runners scan the QR with their phone instead.

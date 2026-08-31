@@ -19,7 +19,7 @@ app.use('/', site);
 
 site.use(express.static(path.join(__dirname, '..', 'public')));
 
-const FEES = { '6K': 600, '4K': 350 };
+const FEES = { '6K': 500, '4K': 300 }; // Early bird: ₹100 off 6K, ₹50 off 4K
 const CATEGORY_LABELS = {
   '6K': '6K Timed Run',
   '4K': '4K Fun Walk',
@@ -132,6 +132,7 @@ site.get('/api/gallery', (req, res) => {
 // after the event; a year with no rows yet just shows as unpublished.
 const CURRENT_EVENT_YEAR = '2026';
 const RESULT_CATEGORIES = ['6K'];
+const PRIZE_PLACES = { '6K': 3 }; // 1st/2nd/3rd for the 6K, each gender
 
 site.get('/api/results', async (req, res) => {
   const rows = await getResultRows();
@@ -156,11 +157,12 @@ site.get('/api/results', async (req, res) => {
         .sort((a, b) => (a.rank || Infinity) - (b.rank || Infinity));
       if (!list.length) continue;
 
+      const places = PRIZE_PLACES[category] || 2;
       categories[category] = {
         fullResults: list,
         prizeWinners: {
-          male: list.filter((r) => r.gender === 'Male').slice(0, 2),
-          female: list.filter((r) => r.gender === 'Female').slice(0, 2),
+          male: list.filter((r) => r.gender === 'Male').slice(0, places),
+          female: list.filter((r) => r.gender === 'Female').slice(0, places),
         },
       };
     }

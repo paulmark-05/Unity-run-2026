@@ -19,7 +19,7 @@
   ];
 
   let currentStep = 1;
-  let fees = { '6K': 600, '4K': 350 };
+  let fees = { '6K': 500, '4K': 300 };
   let upiVpa = null;
   let upiPayeeName = 'Unity Run 2026';
   let upiOrgId = '159020';
@@ -298,7 +298,7 @@
       return;
     }
     const category = getFieldValue('category');
-    const amount = fees[category] || 600;
+    const amount = fees[category] || 500;
 
     // Each fee has its own QR with that amount pre-filled.
     const qrImage = document.querySelector('.upi-qr img');
@@ -337,7 +337,7 @@
     summaryList.innerHTML = rows
       .map(([k, v]) => `<li><span>${k}</span><span>${escapeHtml(v || '—')}</span></li>`)
       .join('');
-    const fee = fees[data.category] || 600;
+    const fee = fees[data.category] || 500;
     feeAmount.textContent = `₹${fee}`;
   }
 
@@ -911,13 +911,11 @@
             <div class="winners-grid">
               <div class="winner-group">
                 <h4>Male</h4>
-                ${winnerRow(winners.male[0], 1)}
-                ${winnerRow(winners.male[1], 2)}
+                ${winners.male.map((entry, i) => winnerRow(entry, i + 1)).join('')}
               </div>
               <div class="winner-group">
                 <h4>Female</h4>
-                ${winnerRow(winners.female[0], 1)}
-                ${winnerRow(winners.female[1], 2)}
+                ${winners.female.map((entry, i) => winnerRow(entry, i + 1)).join('')}
               </div>
             </div>
             <div class="results-table-wrap">
