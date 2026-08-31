@@ -11,7 +11,7 @@ require('dotenv').config();
 const path = require('path');
 const QRCode = require('qrcode');
 
-// One QR per distinct entry fee: Rs 600 for the 10K and 6K runs, Rs 350 for
+// One QR per distinct entry fee: Rs 600 for the 6K run, Rs 350 for
 // the 4K walk. The form shows whichever matches the chosen category.
 const FEES = [600, 350];
 

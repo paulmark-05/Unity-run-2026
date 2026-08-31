@@ -29,7 +29,7 @@ async function appendRegistration(row) {
 // ... L:Category(12) ... W:PaymentStatus(22)
 const COL_CATEGORY = 12;
 const COL_PAYMENT_STATUS = 22;
-const CATEGORIES = ['10K', '6K', '4K'];
+const CATEGORIES = ['6K', '4K'];
 const CONFIRMED_VALUES = new Set(['confirmed', 'verified', 'yes']);
 
 /**
@@ -49,8 +49,8 @@ async function getRegistrationStats() {
   });
   const rows = res.data.values || [];
 
-  const totalByCategory = { '10K': 0, '6K': 0, '4K': 0 };
-  const confirmedByCategory = { '10K': 0, '6K': 0, '4K': 0 };
+  const totalByCategory = { '6K': 0, '4K': 0 };
+  const confirmedByCategory = { '6K': 0, '4K': 0 };
 
   for (const row of rows) {
     const category = (row[COL_CATEGORY] || '').trim();

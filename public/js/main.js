@@ -19,14 +19,14 @@
   ];
 
   let currentStep = 1;
-  let fees = { '10K': 600, '6K': 600, '4K': 350 };
+  let fees = { '6K': 600, '4K': 350 };
   let upiVpa = null;
   let upiPayeeName = 'Unity Run 2026';
   let upiOrgId = '159020';
   let upiMerchantCode = '7800';
   let bankDetails = null;
 
-  const GROUP_OF_CATEGORY = { '10K': 'run', '6K': 'run', '4K': 'walk' };
+  const GROUP_OF_CATEGORY = { '6K': 'run', '4K': 'walk' };
   // Cached so the bento tiles' progress bars can be redrawn from socket
   // "counts" pushes (frequent) without waiting on a fresh "registration"
   // status fetch (rare — only changes when a group fills or closes).
@@ -237,7 +237,7 @@
   }
 
   /**
-   * The 10K/6K run and the 4K walk have separate slot pools, so "full" is a
+   * The 6K run and the 4K walk have separate slot pools, so "full" is a
    * per-group state, not a single site-wide switch. Disables just the pills
    * for a full group, and only shuts down the whole form if every group
    * (or the date) has closed registration entirely.
@@ -256,7 +256,6 @@
     if (walk && walk.cap) groupCaps.walk = walk.cap;
 
     const categoryInputs = {
-      '10K': document.getElementById('cat10k'),
       '6K': document.getElementById('cat6k'),
       '4K': document.getElementById('cat4k'),
     };
@@ -498,12 +497,12 @@
     }
   }
 
-  // 10K and 6K share one "Run" counter, 4K stands alone as "Walk" — matches
-  // how the slot caps are grouped, so the number on screen is the same one
-  // that's actually being checked against a cap.
+  // The 6K is the "Run" counter, 4K stands alone as "Walk" — matches how the
+  // slot caps are grouped, so the number on screen is the same one that's
+  // actually being checked against a cap.
   function applyCounts(counts) {
     if (!counts) return;
-    setCounter('run', (counts['10K'] || 0) + (counts['6K'] || 0));
+    setCounter('run', counts['6K'] || 0);
     setCounter('walk', counts['4K'] || 0);
   }
 
@@ -878,7 +877,7 @@
     if (!yearTabsEl || !bodyEl) return;
 
     let results = [];
-    const RESULT_CATEGORY_LABELS = { '10K': '10K Timed Run', '6K': '6K Timed Run' };
+    const RESULT_CATEGORY_LABELS = { '6K': '6K Timed Run' };
     const NOT_PUBLISHED_HTML = '<p class="results-notice">Result will be published after completion of the event.</p>';
 
     function winnerRow(entry, place) {

@@ -19,20 +19,18 @@ app.use('/', site);
 
 site.use(express.static(path.join(__dirname, '..', 'public')));
 
-const FEES = { '10K': 600, '6K': 600, '4K': 350 };
+const FEES = { '6K': 600, '4K': 350 };
 const CATEGORY_LABELS = {
-  '10K': '10K Timed Run',
   '6K': '6K Timed Run',
   '4K': '4K Fun Walk',
 };
 
 // Registration closes at the end of 19 September 2026, or once a category
-// group's slots are full — the 10K and 6K runs share one pool, the 4K walk
-// has its own.
+// group's slots are full — the 6K run and the 4K walk each have their own pool.
 const REGISTRATION_CLOSES = new Date('2026-09-19T23:59:59+05:30');
-const RUN_CAP = 500; // 10K + 6K combined
+const RUN_CAP = 500; // 6K only
 const WALK_CAP = 300; // 4K only
-const GROUP_OF_CATEGORY = { '10K': 'run', '6K': 'run', '4K': 'walk' };
+const GROUP_OF_CATEGORY = { '6K': 'run', '4K': 'walk' };
 
 async function registrationStatus() {
   const closedByDate = Date.now() > REGISTRATION_CLOSES.getTime();
@@ -43,7 +41,7 @@ async function registrationStatus() {
     console.error('could not read registration stats:', err.message);
   }
 
-  const runCount = stats ? stats.totalByCategory['10K'] + stats.totalByCategory['6K'] : null;
+  const runCount = stats ? stats.totalByCategory['6K'] : null;
   const walkCount = stats ? stats.totalByCategory['4K'] : null;
 
   return {
@@ -82,7 +80,7 @@ site.get('/api/config', async (req, res) => {
     fees: FEES,
     categoryLabels: CATEGORY_LABELS,
     registration: status,
-    counts: status.stats ? status.stats.confirmedByCategory : { '10K': 0, '6K': 0, '4K': 0 },
+    counts: status.stats ? status.stats.confirmedByCategory : { '6K': 0, '4K': 0 },
     upiVpa: process.env.UPI_VPA || null,
     upiPayeeName: process.env.UPI_PAYEE_NAME || 'Unity Run 2026',
     upiOrgId: process.env.UPI_ORG_ID || '159020',
@@ -129,11 +127,11 @@ site.get('/api/gallery', (req, res) => {
   res.json({ galleries });
 });
 
-// Results: only the timed 10K/6K runs get a leaderboard — the 4K walk is
+// Results: only the timed 6K run gets a leaderboard — the 4K walk is
 // untimed and has no prizes. An organizer fills in the "Results" sheet tab
 // after the event; a year with no rows yet just shows as unpublished.
 const CURRENT_EVENT_YEAR = '2026';
-const RESULT_CATEGORIES = ['10K', '6K'];
+const RESULT_CATEGORIES = ['6K'];
 
 site.get('/api/results', async (req, res) => {
   const rows = await getResultRows();
@@ -233,7 +231,7 @@ site.post('/api/register', upload.single('paymentScreenshot'), async (req, res) 
     }
     if (!openFor(status, registration.category)) {
       const group = GROUP_OF_CATEGORY[registration.category];
-      const label = group === 'walk' ? '4K Walk' : '10K / 6K Run';
+      const label = group === 'walk' ? '4K Walk' : '6K Run';
       const cap = group === 'walk' ? WALK_CAP : RUN_CAP;
       return res.status(409).json({ error: `${label} registration is full — all ${cap} places have been taken.` });
     }

@@ -274,7 +274,7 @@ h1.headline .accent { color: var(--red); font-style: italic; }
 
 /* ---------- CATEGORY STRIP ---------- */
 .categories { background: var(--paper); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.cat-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
+.cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); }
 .cat { padding: 32px 28px; border-right: 1px solid var(--line); }
 .cat:last-child { border-right: none; }
 .cat-type { color: var(--red); margin-bottom: 6px; }
@@ -312,7 +312,7 @@ h2.section-title { font-size: clamp(1.8rem, 3.2vw, 2.4rem); line-height: 1.1; ma
 .d-item p.assemble-note { font-weight: 700; color: var(--red); font-size: 0.98rem; }
 
 /* ---------- PRIZES ---------- */
-.prize-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 32px; }
+.prize-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 28px; margin-top: 32px; }
 .prize { border: 1px solid var(--line); border-top: 3px solid var(--navy); padding: 22px 24px 20px; }
 .prize-cat { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--red); margin-bottom: 14px; }
 .prize-row { display: flex; justify-content: space-between; align-items: baseline; padding: 9px 0; border-bottom: 1px dashed var(--line); font-size: 0.92rem; color: var(--ink-soft); }

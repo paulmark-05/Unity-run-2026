@@ -147,7 +147,7 @@ function landscape(w, h, qr, photo) {
     size: 26 * u, weight: 700, fill: PAPER, spacing: 4 * u,
   }));
   y += 44 * u;
-  p.push(text('10K RUN  ·  6K RUN  ·  4K WALK', pad, y, {
+  p.push(text('6K RUN  ·  4K WALK', pad, y, {
     size: 26 * u, weight: 700, fill: SKY, spacing: 4 * u,
   }));
 
@@ -193,7 +193,7 @@ function stacked(w, h, qr, photo) {
 
   // Distance chips
   y += 56 * u;
-  const chips = ['10K', '6K', '4K'];
+  const chips = ['6K', '4K'];
   const chipH = 66 * u;
   const chipW = chipH * 2.2;
   const gap = chipW * 0.14;

@@ -5,7 +5,7 @@ Event website and registration system for Unity Run 2026 — Barasat Stadium, 27
 - Static landing page (`public/`)
 - 4-step registration form (Personal Details → Run Preferences → Disclaimer → Payment)
 - Payment by UPI QR or bank transfer — runners pay, then submit the account they paid from and a screenshot as proof
-- 10K and 6K timed runs (₹600) with separate men's and women's prizes, and a 4K fun walk (₹350)
+- A 6K timed run (₹600) with separate men's and women's prizes, and a 4K fun walk (₹350)
 - Provisional receipt on registration; final confirmation email once an organizer verifies the payment
 - Registrations are written to a Google Sheet; screenshots are uploaded to a Google Drive folder and linked from the sheet
 - Payments are verified manually by the organizers (each row lands as `Pending verification`)
@@ -94,8 +94,8 @@ column so nobody is mailed twice.
 
 ### 5. Registration window
 Set in `server/index.js`: entries close end of **19 September 2026**. Slots are
-capped per group, not site-wide — the 10K and 6K runs share one pool of
-**500**, the 4K walk has its own **300**. A full group disables just its own
+capped per group, not site-wide — the 6K run has a pool of **500**, the 4K
+walk has its own **300**. A full group disables just its own
 pills on the form (`RUN_CAP` / `WALK_CAP` / `GROUP_OF_CATEGORY` in
 `server/index.js`); the whole form only shuts down once every group is full
 or the date has passed. Registrations are numbered in the order received.
@@ -125,7 +125,7 @@ serves whatever's checked in. Re-run the same command any time the source
 folder changes to resync (it overwrites that year's files each time).
 
 ### 8. Results
-Results only apply to the timed 10K/6K (the 4K walk is untimed, no
+Results only apply to the timed 6K run (the 4K walk is untimed, no
 rankings). Fill in the **Results** tab of the same Google Sheet after the
 event — columns are `Year | Category | Gender | Rank | Bib No | Name |
 Finish Time`. Format the Finish Time column as **Plain Text** before typing
@@ -145,7 +145,7 @@ finishers per category followed by the full sorted results table.
 5. Deploy. Render gives you a `https://unity-run-2026.onrender.com`-style URL; a custom domain can be attached later from the same dashboard.
 
 ## Notes
-- Entry fees: ₹600 for the 10K and 6K timed runs, ₹350 for the 4K walk. Change the `FEES` object in `server/index.js`, then rerun `npm run qr` so the QR amounts match.
+- Entry fees: ₹600 for the 6K timed run, ₹350 for the 4K walk. Change the `FEES` object in `server/index.js`, then rerun `npm run qr` so the QR amounts match.
 - Payment is **not** automatically verified. Every registration lands in the sheet as `Pending verification`; an organizer opens the linked screenshot, matches the transaction reference against the bank/UPI statement, and updates that cell to `Confirmed` — this also feeds the live counters and triggers the final confirmation email. Budget time for this before the event.
 - Screenshot uploads are capped at 5 MB and must be image files.
 - The "tap to pay" QR link uses a `upi://` deep link, which only opens an app on mobile devices. On desktop, runners scan the QR with their phone instead.
