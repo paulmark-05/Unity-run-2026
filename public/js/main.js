@@ -118,6 +118,12 @@
     return el.value.trim();
   }
 
+  // Loose match for the name-vs-signature check — case and extra spacing
+  // shouldn't fail someone who typed their own name correctly.
+  function normalizeName(str) {
+    return String(str || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  }
+
   function validateStep(n) {
     if (n === 1) {
       if (!getFieldValue('fullName')) return 'Please enter your full name.';
@@ -139,6 +145,9 @@
     if (n === 3) {
       if (!getFieldValue('waiverAccepted')) return 'You must agree to the participant disclaimer to continue.';
       if (!getFieldValue('signature')) return 'Please type your full name as digital consent.';
+      if (normalizeName(getFieldValue('signature')) !== normalizeName(getFieldValue('fullName'))) {
+        return 'Your name and signature do not match. Please type your full name exactly as entered in Step 1.';
+      }
     }
     if (n === 4) {
       if (!getFieldValue('liabilityAccepted')) return 'You must accept the voluntary participation declaration before paying.';
@@ -319,7 +328,9 @@
       mc: upiMerchantCode,
     });
     link.href = `upi://pay?${params.toString()}`;
-    vpaText.textContent = upiVpa;
+    // Display only — lowercase reads friendlier than a shouty all-caps VPA.
+    // The actual payment param above keeps the exact configured value.
+    vpaText.textContent = upiVpa.toLowerCase();
     vpaLine.hidden = false;
   }
 
