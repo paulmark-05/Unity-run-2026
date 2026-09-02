@@ -73,11 +73,13 @@ Apps Script web app runs inside the organizer's own account and saves the files 
 
 1. In Google Drive, create a folder, e.g. **Unity Run 2026 — Payment Screenshots**, and copy its ID from the URL into `GOOGLE_DRIVE_FOLDER_ID`.
 2. Go to [script.google.com](https://script.google.com) → **New project**.
-3. Paste in the contents of [`scripts/apps-script-upload.gs`](scripts/apps-script-upload.gs), then fill in `FOLDER_ID`, `SHARED_SECRET` and `SHEET_ID` at the top — they are placeholders so no credential is committed.
+3. Paste in the contents of [`scripts/apps-script-upload.gs`](scripts/apps-script-upload.gs) — it reads `FOLDER_ID`, `SHARED_SECRET` and `SHEET_ID` from **Script Properties** rather than from the code, so no credential is ever committed and pulling a newer copy of the file later won't overwrite them. Set them once: gear icon (**Project Settings**) in the left sidebar → **Script Properties** → add all three.
 4. **Deploy → New deployment → Web app**, with **Execute as: Me** and **Who has access: Anyone**, then **Deploy** and authorize it.
-5. Copy the deployment's `/exec` URL into `APPS_SCRIPT_UPLOAD_URL`, and make sure `APPS_SCRIPT_SECRET` matches the secret in the script.
+5. Copy the deployment's `/exec` URL into `APPS_SCRIPT_UPLOAD_URL`, and make sure `APPS_SCRIPT_SECRET` matches the `SHARED_SECRET` script property.
 
-The endpoint is unauthenticated by URL, so the shared secret is what stops strangers uploading into the folder. If it ever leaks, change it in both the script and `.env`, and redeploy the script.
+The endpoint is unauthenticated by URL, so the shared secret is what stops strangers uploading into the folder. If it ever leaks, change it in both the `SHARED_SECRET` script property and `.env`/Render.
+
+To update the script's *code* later without touching your Script Properties: paste the new file content over the old code in the editor, save, then **Deploy → Manage deployments** → edit the existing deployment → set **Version** to **New version** → **Deploy**. This keeps the same `/exec` URL (no need to change `APPS_SCRIPT_UPLOAD_URL`) while running the updated code — the trigger function (`sendPendingConfirmations`) picks up new code just by being saved, without needing this step at all, but `doPost` (uploads, OTP emails, registration emails) only updates on a new deployment version.
 
 ### 4. Confirmation emails
 The same Apps Script sends mail as the organizer's Gmail account, so no SMTP

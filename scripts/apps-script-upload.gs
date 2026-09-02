@@ -8,18 +8,28 @@
  *   2. Sending email as the organizer's Gmail address, with no SMTP password
  *      stored anywhere.
  *
- * Deploy: script.google.com -> paste this -> fill in the three values below ->
- * Deploy -> New deployment -> Web app -> Execute as "Me",
- * Who has access "Anyone" -> Deploy. Put the /exec URL in APPS_SCRIPT_UPLOAD_URL.
+ * Deploy: script.google.com -> paste this in -> Deploy -> New deployment ->
+ * Web app -> Execute as "Me", Who has access "Anyone" -> Deploy. Put the
+ * /exec URL in APPS_SCRIPT_UPLOAD_URL.
+ *
+ * One-time setup (before the first deploy, and it's the *only* time you
+ * need to touch these — pulling a newer copy of this file from the repo
+ * afterwards never overwrites them): in the editor, click the gear icon
+ * (Project Settings) on the left sidebar, scroll to "Script Properties",
+ * and add three properties:
+ *   FOLDER_ID      -> your Drive screenshots folder ID
+ *   SHARED_SECRET  -> the same value as APPS_SCRIPT_SECRET in Render
+ *   SHEET_ID       -> your Google Sheet ID
  *
  * Then, for final confirmations, add a time-driven trigger:
  * Triggers -> Add trigger -> function `sendPendingConfirmations`,
  * event source "Time-driven", "Hour timer", every hour.
  */
 
-const FOLDER_ID = 'PASTE_DRIVE_FOLDER_ID_HERE';
-const SHARED_SECRET = 'PASTE_SHARED_SECRET_HERE';
-const SHEET_ID = 'PASTE_SHEET_ID_HERE';
+const scriptProps = PropertiesService.getScriptProperties();
+const FOLDER_ID = scriptProps.getProperty('FOLDER_ID');
+const SHARED_SECRET = scriptProps.getProperty('SHARED_SECRET');
+const SHEET_ID = scriptProps.getProperty('SHEET_ID');
 
 const SHEET_TAB = 'Registrations';
 const ORGANIZER_NAME = 'Zila Sainik Board, North 24 Parganas';
