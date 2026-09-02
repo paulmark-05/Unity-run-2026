@@ -23,7 +23,7 @@ const SHEET_ID = 'PASTE_SHEET_ID_HERE';
 
 const SHEET_TAB = 'Registrations';
 const ORGANIZER_NAME = 'Zila Sainik Board, North 24 Parganas';
-const LOGO_URL = 'https://unity-run-2026.zsb-barasat.in/assets/zsb-logo.jpg';
+const LOGO_URL = 'https://unity-run-2026.zsb-barasat.in/assets/zsb-logo-transparent.png';
 
 /**
  * Wraps a block of content HTML in the branded email shell (logo + "ZSB
@@ -73,7 +73,9 @@ function doPost(e) {
       if (!body.to || !body.subject) {
         return jsonResponse({ error: 'Missing mail fields' });
       }
-      MailApp.sendEmail({ to: body.to, subject: body.subject, body: body.body || '' });
+      const mailOptions = { to: body.to, subject: body.subject, body: body.body || '' };
+      if (body.htmlBody) mailOptions.htmlBody = body.htmlBody;
+      MailApp.sendEmail(mailOptions);
       return jsonResponse({ sent: true });
     }
 
@@ -147,7 +149,7 @@ function sendPendingConfirmations() {
         '  Date:     Sunday, 27 September 2026',
         '  Venue:    Barasat Stadium',
         '  Flag-off: 6:00 AM for the 6K run, followed by the 4K walk',
-        '  Report:   Please arrive by 5:30 AM to collect your bib',
+        '  Report:   Please assemble at the venue by 5:00 AM',
         '',
         'Please bring this email and a photo ID to collect your bib and T-shirt.',
         '',
@@ -170,7 +172,7 @@ function sendPendingConfirmations() {
           'Date: Sunday, 27 September 2026<br/>' +
           'Venue: Barasat Stadium<br/>' +
           'Flag-off: 6:00 AM for the 6K run, followed by the 4K walk<br/>' +
-          'Report: Please arrive by 5:30 AM to collect your bib' +
+          'Report: Please assemble at the venue by 5:00 AM' +
         '</div>' +
         '<p>Please bring this email and a photo ID to collect your bib and T-shirt.</p>' +
         '<p><strong>See you there!</strong></p>';

@@ -67,6 +67,29 @@ function calculateAge(isoDob) {
   return age;
 }
 
+// Same branded shell as scripts/apps-script-upload.gs's wrapEmailHtml — kept
+// in sync by hand since the two run in different environments (this file
+// sends the OTP and provisional-receipt emails; the Apps Script sends the
+// Confirmed/Rejected ones once an organizer reviews a payment).
+const LOGO_URL = 'https://unity-run-2026.zsb-barasat.in/assets/zsb-logo-transparent.png';
+
+function wrapEmailHtml(contentHtml) {
+  return (
+    '<div style="font-family: Arial, Helvetica, sans-serif; max-width: 560px; margin: 0 auto; color: #14161C; border: 1px solid #e3e5ea;">' +
+      '<div style="background: #1B2260; padding: 22px 24px; text-align: center;">' +
+        `<img src="${LOGO_URL}" alt="ZSB North 24 Parganas" width="60" style="display: block; margin: 0 auto 10px; border: 0;" />` +
+        '<div style="color: #ffffff; font-size: 17px; font-weight: bold; letter-spacing: 0.4px;">ZSB North 24 Parganas</div>' +
+      '</div>' +
+      '<div style="padding: 24px; line-height: 1.6; font-size: 14px;">' +
+        contentHtml +
+      '</div>' +
+      '<div style="padding: 14px 24px; border-top: 1px solid #eee; font-size: 11px; color: #888; text-align: center;">' +
+        'Unity Run 2026 &middot; Zila Sainik Board, North 24 Parganas' +
+      '</div>' +
+    '</div>'
+  );
+}
+
 async function registrationStatus() {
   const closedByDate = Date.now() > REGISTRATION_CLOSES.getTime();
   let stats = null;
@@ -306,6 +329,11 @@ site.post('/api/send-otp', async (req, res) => {
         '',
         'Zila Sainik Board, North 24 Parganas',
       ].join('\n'),
+      htmlBody: wrapEmailHtml(
+        '<p>Your verification code is:</p>' +
+        `<div style="font-size: 30px; font-weight: bold; letter-spacing: 6px; color: #1B2260; text-align: center; padding: 14px 0; background: #EAF6FD; border-left: 3px solid #46AEE0; margin: 12px 0 18px;">${otp}</div>` +
+        '<p style="color: #3C424E; font-size: 13px;">This code expires in 10 minutes. If you did not request this, you can ignore this email.</p>'
+      ),
     });
   } catch (err) {
     console.error('could not send OTP email:', err.message);
@@ -424,12 +452,15 @@ site.post('/api/register', upload.single('paymentScreenshot'), async (req, res) 
 
     otpStore.delete(String(registration.email || '').trim().toLowerCase());
 
-    // Provisional receipt. The final confirmation goes out from the sheet once
-    // an organizer has checked the payment against the bank.
+    // Provisional receipt — "Registration Received". The final confirmation
+    // goes out from the sheet once an organizer has checked the payment
+    // against the bank.
     try {
+      const categoryLabel = CATEGORY_LABELS[registration.category] || registration.category;
+      const reference = (registration.paymentMethod === 'UPI' ? registration.upiTxnRef : registration.bankUtr) || '-';
       await sendMail({
         to: registration.email,
-        subject: `Unity Run 2026 — provisional receipt ${registrationId}`,
+        subject: `Unity Run 2026 — registration received (${registrationId})`,
         body: [
           `Dear ${registration.fullName},`,
           '',
@@ -437,24 +468,48 @@ site.post('/api/register', upload.single('paymentScreenshot'), async (req, res) 
           '',
           `Registration no: ${registrationId}`,
           `Participant no: ${sequenceNo}`,
-          `Category: ${CATEGORY_LABELS[registration.category] || registration.category}`,
+          `Category: ${categoryLabel}`,
           `T-shirt size: ${registration.tshirtSize}`,
           `Amount: Rs ${FEES[registration.category]}`,
           `Paid by: ${registration.paymentMethod}`,
-          `Reference: ${(registration.paymentMethod === 'UPI' ? registration.upiTxnRef : registration.bankUtr) || '-'}`,
+          `Reference: ${reference}`,
           '',
           'This is a PROVISIONAL receipt. Your payment will be checked against our',
           'bank records and a final confirmation will be emailed to you within 2',
           'working days. Please keep this email until then.',
           '',
           'Event: Sunday, 27 September 2026, Barasat Stadium. Flag-off 6:00 AM.',
+          'Please assemble at the venue by 5:00 AM.',
           '',
           'Zila Sainik Board, North 24 Parganas',
         ].join('\n'),
+        htmlBody: wrapEmailHtml(
+          `<p>Dear ${registration.fullName},</p>` +
+          '<p>We have received your registration for <strong>Unity Run 2026</strong>.</p>' +
+          '<table style="width: 100%; border-collapse: collapse; margin: 18px 0;">' +
+            `<tr><td style="padding: 5px 0; color: #3C424E;">Registration no.</td><td style="padding: 5px 0; font-weight: bold; text-align: right;">${registrationId}</td></tr>` +
+            `<tr><td style="padding: 5px 0; color: #3C424E;">Participant no.</td><td style="padding: 5px 0; font-weight: bold; text-align: right;">${sequenceNo}</td></tr>` +
+            `<tr><td style="padding: 5px 0; color: #3C424E;">Category</td><td style="padding: 5px 0; font-weight: bold; text-align: right;">${categoryLabel}</td></tr>` +
+            `<tr><td style="padding: 5px 0; color: #3C424E;">T-shirt size</td><td style="padding: 5px 0; font-weight: bold; text-align: right;">${registration.tshirtSize}</td></tr>` +
+            `<tr><td style="padding: 5px 0; color: #3C424E;">Amount</td><td style="padding: 5px 0; font-weight: bold; text-align: right;">₹${FEES[registration.category]}</td></tr>` +
+            `<tr><td style="padding: 5px 0; color: #3C424E;">Paid by</td><td style="padding: 5px 0; font-weight: bold; text-align: right;">${registration.paymentMethod}</td></tr>` +
+            `<tr><td style="padding: 5px 0; color: #3C424E;">Reference</td><td style="padding: 5px 0; font-weight: bold; text-align: right;">${reference}</td></tr>` +
+          '</table>' +
+          '<p style="background: #FDEFEA; border-left: 3px solid #C41E2A; padding: 12px 16px; font-size: 13px; color: #3C424E;">' +
+          'This is a <strong>PROVISIONAL</strong> receipt. Your payment will be checked against our bank records and a final confirmation will be emailed to you within 2 working days. Please keep this email until then.' +
+          '</p>' +
+          '<div style="background: #EAF6FD; border-left: 3px solid #46AEE0; padding: 14px 16px; margin: 0 0 4px;">' +
+            '<div style="font-weight: bold; margin-bottom: 6px;">Event details</div>' +
+            'Date: Sunday, 27 September 2026<br/>' +
+            'Venue: Barasat Stadium<br/>' +
+            'Flag-off: 6:00 AM<br/>' +
+            'Please assemble at the venue by 5:00 AM.' +
+          '</div>'
+        ),
       });
     } catch (err) {
       // A failed receipt must not lose a paid registration — the row is saved.
-      console.error('provisional receipt email failed:', err.message);
+      console.error('registration received email failed:', err.message);
     }
 
     res.json({ success: true, registrationId, sequenceNo });

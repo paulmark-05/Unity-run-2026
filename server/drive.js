@@ -47,9 +47,11 @@ async function uploadPaymentScreenshot(file, registrationId) {
   return result.url;
 }
 
-/** Sends mail as the organizer's own Gmail account, via the same Apps Script. */
-async function sendMail({ to, subject, body }) {
-  await callAppsScript({ action: 'sendMail', to, subject, body });
+/** Sends mail as the organizer's own Gmail account, via the same Apps Script.
+ *  `htmlBody` is optional — when given, HTML-capable clients render that
+ *  instead of the plain-text `body`, which still goes along as a fallback. */
+async function sendMail({ to, subject, body, htmlBody }) {
+  await callAppsScript({ action: 'sendMail', to, subject, body, htmlBody });
 }
 
 module.exports = { uploadPaymentScreenshot, sendMail };
