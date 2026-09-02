@@ -23,6 +23,30 @@ const SHEET_ID = 'PASTE_SHEET_ID_HERE';
 
 const SHEET_TAB = 'Registrations';
 const ORGANIZER_NAME = 'Zila Sainik Board, North 24 Parganas';
+const LOGO_URL = 'https://unity-run-2026.zsb-barasat.in/assets/zsb-logo.jpg';
+
+/**
+ * Wraps a block of content HTML in the branded email shell (logo + "ZSB
+ * North 24 Parganas" headline, matching the site's navy/red/sky palette).
+ * `contentHtml` should be a series of <p>/<div> blocks — no need to
+ * include your own outer wrapper.
+ */
+function wrapEmailHtml(contentHtml) {
+  return (
+    '<div style="font-family: Arial, Helvetica, sans-serif; max-width: 560px; margin: 0 auto; color: #14161C; border: 1px solid #e3e5ea;">' +
+      '<div style="background: #1B2260; padding: 22px 24px; text-align: center;">' +
+        '<img src="' + LOGO_URL + '" alt="ZSB North 24 Parganas" width="60" style="display: block; margin: 0 auto 10px; border: 0;" />' +
+        '<div style="color: #ffffff; font-size: 17px; font-weight: bold; letter-spacing: 0.4px;">ZSB North 24 Parganas</div>' +
+      '</div>' +
+      '<div style="padding: 24px; line-height: 1.6; font-size: 14px;">' +
+        contentHtml +
+      '</div>' +
+      '<div style="padding: 14px 24px; border-top: 1px solid #eee; font-size: 11px; color: #888; text-align: center;">' +
+        'Unity Run 2026 &middot; Zila Sainik Board, North 24 Parganas' +
+      '</div>' +
+    '</div>'
+  );
+}
 
 // Column positions, 1-based, matching the header row.
 const COL = {
@@ -106,7 +130,7 @@ function sendPendingConfirmations() {
     const category = row[COL.category - 1];
     const tshirt = row[COL.tshirt - 1];
 
-    let subject, body;
+    let subject, body, contentHtml;
     if (confirmed) {
       subject = 'Unity Run 2026 — registration confirmed (' + regId + ')';
       body = [
@@ -131,6 +155,25 @@ function sendPendingConfirmations() {
         '',
         ORGANIZER_NAME,
       ].join('\n');
+      contentHtml =
+        '<p>Dear ' + name + ',</p>' +
+        '<p>Your payment has been verified and your place in <strong>Unity Run 2026</strong> is ' +
+        '<strong style="color: #1B2260;">CONFIRMED</strong>.</p>' +
+        '<table style="width: 100%; border-collapse: collapse; margin: 18px 0;">' +
+          '<tr><td style="padding: 5px 0; color: #3C424E;">Registration no.</td><td style="padding: 5px 0; font-weight: bold; text-align: right;">' + regId + '</td></tr>' +
+          '<tr><td style="padding: 5px 0; color: #3C424E;">Participant no.</td><td style="padding: 5px 0; font-weight: bold; text-align: right;">' + slNo + '</td></tr>' +
+          '<tr><td style="padding: 5px 0; color: #3C424E;">Category</td><td style="padding: 5px 0; font-weight: bold; text-align: right;">' + category + '</td></tr>' +
+          '<tr><td style="padding: 5px 0; color: #3C424E;">T-shirt size</td><td style="padding: 5px 0; font-weight: bold; text-align: right;">' + tshirt + '</td></tr>' +
+        '</table>' +
+        '<div style="background: #EAF6FD; border-left: 3px solid #46AEE0; padding: 14px 16px; margin: 0 0 18px;">' +
+          '<div style="font-weight: bold; margin-bottom: 6px;">Event details</div>' +
+          'Date: Sunday, 27 September 2026<br/>' +
+          'Venue: Barasat Stadium<br/>' +
+          'Flag-off: 6:00 AM for the 6K run, followed by the 4K walk<br/>' +
+          'Report: Please arrive by 5:30 AM to collect your bib' +
+        '</div>' +
+        '<p>Please bring this email and a photo ID to collect your bib and T-shirt.</p>' +
+        '<p><strong>See you there!</strong></p>';
     } else {
       subject = 'Unity Run 2026 — payment could not be verified (' + regId + ')';
       body = [
@@ -149,9 +192,22 @@ function sendPendingConfirmations() {
         '',
         ORGANIZER_NAME,
       ].join('\n');
+      contentHtml =
+        '<p>Dear ' + name + ',</p>' +
+        '<p>Your registration no. <strong>' + regId + '</strong> for Unity Run 2026 — your payment ' +
+        '<strong style="color: #C41E2A;">could not be verified</strong>. Please share your payment ' +
+        'screenshot and the following details to this email:</p>' +
+        '<ul style="margin: 0 0 18px; padding-left: 20px;">' +
+          '<li>Full name</li>' +
+          '<li>Phone number</li>' +
+          '<li>Payment method (UPI / Bank Transfer)</li>' +
+          '<li>Transaction ID / UTR</li>' +
+          '<li>Payment screenshot</li>' +
+          '<li>Details of payment (amount and date)</li>' +
+        '</ul>';
     }
 
-    MailApp.sendEmail({ to: email, subject: subject, body: body });
+    MailApp.sendEmail({ to: email, subject: subject, body: body, htmlBody: wrapEmailHtml(contentHtml) });
 
     sheet.getRange(i + 1, COL.confirmationSent).setValue(
       (confirmed ? 'Confirmed' : 'Rejected') + ' – ' + new Date().toLocaleString()
