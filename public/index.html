@@ -255,6 +255,7 @@
           </div>
           <div class="f-group">
             <label class="f-label" for="email">Email Address</label>
+            <p class="confirmation-note">Confirmation of registration will be sent on this email.</p>
             <div class="email-verify-row">
               <input class="f-input" id="email" name="email" type="email" placeholder="Confirmation will be sent here" required />
               <button type="button" class="btn btn-outline btn-otp" id="sendOtpBtn">Send Code</button>
@@ -385,29 +386,33 @@
             </select>
           </div>
 
+          <p class="confirmation-note">Read the instructions carefully before initiating payment.</p>
+
           <!-- UPI -->
           <div id="upiBlock">
             <div class="subhead">Pay via UPI</div>
+            <div class="instructions-block">
+              <div class="instructions-heading">Instructions:</div>
+              <p class="upi-instructions">
+                <strong>Scan this QR with any UPI app (GPay, PhonePe, Paytm)</strong> — this is the most reliable way to pay.
+              </p>
+              <p class="upi-instructions">
+                On mobile you can also tap the QR above to open your UPI app directly. If that doesn't go through after entering your PIN, please scan the QR instead rather than retrying the tap.
+              </p>
+              <p class="upi-instructions">
+                After paying, take a screenshot of the confirmation and upload it below.
+              </p>
+              <p class="confirmation-note">You will receive a payment confirmation email within 2 days.</p>
+            </div>
+
             <div class="upi-pay">
               <a class="upi-qr" id="upiLink" href="#" aria-label="Pay via UPI">
                 <img src="assets/upi-qr-500.png" alt="UPI payment QR code" />
                 <span class="upi-qr-hint sans">Scan to pay <span id="upiQrAmount">₹500</span></span>
               </a>
-              <div class="upi-copy">
-                <p class="upi-instructions">
-                  <strong>Scan this QR with any UPI app (GPay, PhonePe, Paytm)</strong> — this is the most reliable way to pay.
-                </p>
-                <p class="upi-instructions">
-                  On mobile you can also tap the QR above to open your UPI app directly. If that doesn't go through after entering your PIN, please scan the QR instead rather than retrying the tap.
-                </p>
-                <div class="upi-vpa-line" id="upiVpaLine" hidden>
-                  <span class="k label">Paying to</span>
-                  <span class="v" id="upiVpaText"></span>
-                </div>
-                <p class="upi-instructions">
-                  After paying, take a screenshot of the confirmation and upload it below.
-                </p>
-                <p class="confirmation-note">You will receive a payment confirmation email within 2 days.</p>
+              <div class="upi-vpa-line" id="upiVpaLine" hidden>
+                <span class="k label">Paying to</span>
+                <span class="v" id="upiVpaText"></span>
               </div>
             </div>
 
@@ -427,12 +432,15 @@
           <!-- Bank transfer -->
           <div id="bankBlock" hidden>
             <div class="subhead">Pay by bank transfer</div>
-            <p class="upi-instructions">Transfer the registration fee to the account below via NEFT, IMPS or RTGS.</p>
+            <div class="instructions-block">
+              <div class="instructions-heading">Instructions:</div>
+              <p class="upi-instructions">Transfer the registration fee to the account below via NEFT, IMPS or RTGS.</p>
+              <p class="upi-instructions">
+                Once the transfer is complete, enter the account you paid from and upload the confirmation screenshot.
+              </p>
+              <p class="confirmation-note">You will receive a payment confirmation email within 2 days.</p>
+            </div>
             <dl class="bank-details" id="bankDetails"></dl>
-            <p class="upi-instructions">
-              Once the transfer is complete, enter the account you paid from and upload the confirmation screenshot.
-            </p>
-            <p class="confirmation-note">You will receive a payment confirmation email within 2 days.</p>
 
             <div class="f-group">
               <label class="f-label" for="payerAccountName">Account holder name</label>

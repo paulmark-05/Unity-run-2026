@@ -314,7 +314,7 @@ h2.section-title { font-size: clamp(1.8rem, 3.2vw, 2.4rem); line-height: 1.1; ma
 .d-item h3 { font-size: 1.4rem; margin: 12px 0 10px; color: var(--navy); }
 .d-item p { color: var(--ink-soft); line-height: 1.65; font-size: 0.93rem; }
 .d-item p.assemble-note { font-weight: 700; color: var(--red); font-size: 0.98rem; }
-.confirmation-note { font-weight: 700; color: var(--red); font-size: 0.86rem; }
+.confirmation-note { font-weight: 700; color: var(--red); font-size: 0.86rem; margin: 0 0 10px; }
 
 /* ---------- PRIZES ---------- */
 .prize-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 28px; margin-top: 32px; }
@@ -718,6 +718,7 @@ footer.site { background: var(--paper); color: var(--ink-soft); padding: 44px 0;
 .email-verify-row .f-input { flex: 1; min-width: 0; }
 .btn-otp { padding: 0 16px; font-size: 0.66rem; flex-shrink: 0; white-space: nowrap; }
 .btn-otp:disabled { opacity: 0.55; cursor: not-allowed; }
+.otp-row[hidden] { display: none; }
 .otp-row { display: flex; gap: 8px; margin-top: 10px; }
 .otp-row .otp-input {
   max-width: 140px;
@@ -787,7 +788,7 @@ footer.site { background: var(--paper); color: var(--ink-soft); padding: 44px 0;
   display: grid;
   grid-template-columns: 190px 1fr;
   gap: 22px;
-  align-items: start;
+  align-items: center;
   margin-bottom: 22px;
 }
 .upi-qr {
@@ -810,8 +811,27 @@ footer.site { background: var(--paper); color: var(--ink-soft); padding: 44px 0;
   color: var(--red);
   margin-top: 8px;
 }
-.upi-copy { display: flex; flex-direction: column; gap: 12px; }
 .upi-instructions { margin: 0; font-size: 0.88rem; line-height: 1.6; color: var(--ink-soft); }
+.instructions-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--navy);
+  background: var(--sky-pale);
+  padding: 16px 18px;
+  margin-bottom: 20px;
+}
+.instructions-heading {
+  font-family: 'Inter', Arial, system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--navy);
+}
+.instructions-block .confirmation-note { margin: 0; }
+.upi-vpa-line[hidden] { display: none; }
 .upi-vpa-line {
   display: flex;
   flex-direction: column;
