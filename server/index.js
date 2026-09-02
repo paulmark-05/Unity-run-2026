@@ -32,6 +32,41 @@ const RUN_CAP = 500; // 6K only
 const WALK_CAP = 300; // 4K only
 const GROUP_OF_CATEGORY = { '6K': 'run', '4K': 'walk' };
 
+/** "dd-mm-yyyy HH:MM:SS" in IST, regardless of the server's own timezone. */
+function timestampIST() {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Kolkata',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).formatToParts(new Date());
+  const get = (type) => parts.find((p) => p.type === type).value;
+  return `${get('day')}-${get('month')}-${get('year')} ${get('hour')}:${get('minute')}:${get('second')}`;
+}
+
+/** The date <input> submits "yyyy-mm-dd" — the sheet wants "dd-mm-yyyy". */
+function dobToDisplay(isoDob) {
+  const [y, m, d] = String(isoDob || '').split('-');
+  return y && m && d ? `${d}-${m}-${y}` : (isoDob || '');
+}
+
+/** Age in whole years as of today, from a "yyyy-mm-dd" date of birth. */
+function calculateAge(isoDob) {
+  const dob = new Date(`${isoDob}T00:00:00+05:30`);
+  if (Number.isNaN(dob.getTime())) return '';
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const beforeBirthdayThisYear =
+    today.getMonth() < dob.getMonth() ||
+    (today.getMonth() === dob.getMonth() && today.getDate() < dob.getDate());
+  if (beforeBirthdayThisYear) age -= 1;
+  return age;
+}
+
 async function registrationStatus() {
   const closedByDate = Date.now() > REGISTRATION_CLOSES.getTime();
   let stats = null;
@@ -357,11 +392,12 @@ site.post('/api/register', upload.single('paymentScreenshot'), async (req, res) 
     const sequenceNo = (status.stats ? status.stats.totalRows : 0) + 1;
 
     await appendRegistration([
-      new Date().toISOString(),
+      timestampIST(),
       sequenceNo,
       registrationId,
       registration.fullName,
-      registration.dob,
+      dobToDisplay(registration.dob),
+      calculateAge(registration.dob),
       registration.gender,
       registration.bloodGroup,
       registration.email,
