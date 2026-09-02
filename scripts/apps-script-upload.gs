@@ -71,9 +71,16 @@ function doPost(e) {
 }
 
 /**
- * Emails the final confirmation to anyone an organizer has marked as confirmed.
- * Run hourly on a time-driven trigger. Rows are only ever mailed once — the
- * "Confirmation Sent" column is stamped immediately after sending.
+ * Emails runners once an organizer sets their Payment Status to Confirmed
+ * or Rejected. Run hourly on a time-driven trigger.
+ *
+ * The "Confirmation Sent" column stores which outcome was last emailed
+ * (e.g. "Confirmed – 9/5/2026, 10:03:00 AM"), not just a timestamp — so a
+ * row is only skipped if it's already been mailed for its *current*
+ * outcome. If an organizer rejects a row and later corrects that to
+ * Confirmed (or vice versa), the changed outcome no longer matches what's
+ * stamped, so the right email goes out again rather than being silently
+ * skipped forever.
  */
 function sendPendingConfirmations() {
   const sheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName(SHEET_TAB);
@@ -82,11 +89,16 @@ function sendPendingConfirmations() {
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
     const status = String(row[COL.paymentStatus - 1] || '').trim().toLowerCase();
-    const alreadySent = String(row[COL.confirmationSent - 1] || '').trim();
+    const alreadySentFor = String(row[COL.confirmationSent - 1] || '').trim().toLowerCase();
     const email = String(row[COL.email - 1] || '').trim();
+    if (!email) continue;
 
     const confirmed = status === 'confirmed' || status === 'verified' || status === 'yes';
-    if (!confirmed || alreadySent || !email) continue;
+    const rejected = status === 'rejected';
+    if (!confirmed && !rejected) continue;
+
+    const outcome = confirmed ? 'confirmed' : 'rejected';
+    if (alreadySentFor.indexOf(outcome) === 0) continue; // already mailed for this exact outcome
 
     const name = row[COL.fullName - 1];
     const regId = row[COL.registrationId - 1];
@@ -94,36 +106,52 @@ function sendPendingConfirmations() {
     const category = row[COL.category - 1];
     const tshirt = row[COL.tshirt - 1];
 
-    const body = [
-      'Dear ' + name + ',',
-      '',
-      'Your payment has been verified and your place in Unity Run 2026 is CONFIRMED.',
-      '',
-      'Registration no: ' + regId,
-      'Participant no: ' + slNo,
-      'Category: ' + category,
-      'T-shirt size: ' + tshirt,
-      '',
-      'Event details',
-      '  Date:     Sunday, 27 September 2026',
-      '  Venue:    Barasat Stadium',
-      '  Flag-off: 6:00 AM for the 6K run, followed by the 4K walk',
-      '  Report:   Please arrive by 5:30 AM to collect your bib',
-      '',
-      'Please bring this email and a photo ID to collect your bib and T-shirt.',
-      '',
-      'See you there!',
-      '',
-      ORGANIZER_NAME,
-    ].join('\n');
+    let subject, body;
+    if (confirmed) {
+      subject = 'Unity Run 2026 — registration confirmed (' + regId + ')';
+      body = [
+        'Dear ' + name + ',',
+        '',
+        'Your payment has been verified and your place in Unity Run 2026 is CONFIRMED.',
+        '',
+        'Registration no: ' + regId,
+        'Participant no: ' + slNo,
+        'Category: ' + category,
+        'T-shirt size: ' + tshirt,
+        '',
+        'Event details',
+        '  Date:     Sunday, 27 September 2026',
+        '  Venue:    Barasat Stadium',
+        '  Flag-off: 6:00 AM for the 6K run, followed by the 4K walk',
+        '  Report:   Please arrive by 5:30 AM to collect your bib',
+        '',
+        'Please bring this email and a photo ID to collect your bib and T-shirt.',
+        '',
+        'See you there!',
+        '',
+        ORGANIZER_NAME,
+      ].join('\n');
+    } else {
+      subject = 'Unity Run 2026 — payment could not be verified (' + regId + ')';
+      body = [
+        'Dear ' + name + ',',
+        '',
+        'We could not verify the payment for your Unity Run 2026 registration',
+        '(no. ' + regId + ') against our bank records.',
+        '',
+        'Please reply to this email with a clear screenshot of your payment',
+        'confirmation, showing the amount, date, and transaction/UTR reference',
+        'number, so we can check it again.',
+        '',
+        ORGANIZER_NAME,
+      ].join('\n');
+    }
 
-    MailApp.sendEmail({
-      to: email,
-      subject: 'Unity Run 2026 — registration confirmed (' + regId + ')',
-      body: body,
-    });
+    MailApp.sendEmail({ to: email, subject: subject, body: body });
 
-    sheet.getRange(i + 1, COL.confirmationSent).setValue(new Date());
+    sheet.getRange(i + 1, COL.confirmationSent).setValue(
+      (confirmed ? 'Confirmed' : 'Rejected') + ' – ' + new Date().toLocaleString()
+    );
     SpreadsheetApp.flush();
   }
 }

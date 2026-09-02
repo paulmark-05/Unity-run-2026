@@ -80,7 +80,11 @@ site.get('/api/config', async (req, res) => {
     fees: FEES,
     categoryLabels: CATEGORY_LABELS,
     registration: status,
-    counts: status.stats ? status.stats.confirmedByCategory : { '6K': 0, '4K': 0 },
+    // Total, not confirmed-only — a slot is held the moment someone
+    // registers (that's what the cap check above enforces too), so the
+    // public counter should move immediately rather than waiting on an
+    // organizer to manually mark a row Confirmed.
+    counts: status.stats ? status.stats.totalByCategory : { '6K': 0, '4K': 0 },
     upiVpa: process.env.UPI_VPA || null,
     upiPayeeName: process.env.UPI_PAYEE_NAME || 'Unity Run 2026',
     upiOrgId: process.env.UPI_ORG_ID || '159020',
@@ -334,12 +338,12 @@ site.post('/api/register', upload.single('paymentScreenshot'), async (req, res) 
     // registrations are flagged in the sheet so nothing silently looks verified.
     const uploadConfigured = Boolean(process.env.APPS_SCRIPT_UPLOAD_URL && process.env.APPS_SCRIPT_SECRET);
     let screenshotLink = 'NOT SAVED — upload endpoint not configured';
-    let paymentStatus = 'Pending verification — screenshot missing';
+    let paymentStatus = 'Pending confirmation — screenshot missing';
 
     if (uploadConfigured) {
       try {
         screenshotLink = await uploadPaymentScreenshot(req.file, registrationId);
-        paymentStatus = 'Pending verification';
+        paymentStatus = 'Pending confirmation';
       } catch (err) {
         console.error('screenshot upload failed:', err.message);
         return res.status(500).json({ error: 'Your payment screenshot could not be uploaded. Please try again.' });
@@ -442,7 +446,7 @@ const io = new SocketIOServer(httpServer);
 
 async function currentCounts() {
   const stats = await getRegistrationStats();
-  return stats.confirmedByCategory;
+  return stats.totalByCategory;
 }
 
 io.on('connection', async (socket) => {

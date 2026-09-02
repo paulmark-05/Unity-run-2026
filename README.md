@@ -8,7 +8,7 @@ Event website and registration system for Unity Run 2026 — Barasat Stadium, 27
 - A 6K timed run (₹500, early bird) with separate men's and women's prizes, and a 4K fun walk (₹300, early bird)
 - Provisional receipt on registration; final confirmation email once an organizer verifies the payment
 - Registrations are written to a Google Sheet; screenshots are uploaded to a Google Drive folder and linked from the sheet
-- Payments are verified manually by the organizers (each row lands as `Pending verification`)
+- Payments are verified manually by the organizers (each row lands as `Pending confirmation`)
 
 ## Project structure
 
@@ -157,7 +157,7 @@ finishers per category followed by the full sorted results table.
 
 ## Notes
 - Entry fees: ₹500 for the 6K timed run, ₹300 for the 4K walk (early bird pricing, ₹100/₹50 off the regular ₹600/₹350). Change the `FEES` object in `server/index.js`, then rerun `npm run qr` so the QR amounts match.
-- Payment is **not** automatically verified. Every registration lands in the sheet as `Pending verification`; an organizer opens the linked screenshot, matches the transaction reference against the bank/UPI statement, and updates that cell to `Confirmed` — this also feeds the live counters and triggers the final confirmation email. Budget time for this before the event. The sheet has a filter across the header row and a dropdown (Pending verification / Confirmed / Rejected) on the Payment Status column to make this faster.
+- Payment is **not** automatically verified. Every registration lands in the sheet as `Pending confirmation`; an organizer opens the linked screenshot, matches the transaction reference against the bank/UPI statement, and picks `Confirmed` or `Rejected` from the Payment Status dropdown. `Confirmed` triggers the final confirmation email; `Rejected` triggers an email asking the runner to re-send their payment screenshot. The live seat counters aren't gated on this — they count every registration the moment it's submitted (same number the slot cap enforces against), not just confirmed ones. Budget time for verification before the event regardless. The sheet has a filter across the header row and a strict dropdown (Pending confirmation / Confirmed / Rejected) on the Payment Status column.
 - Screenshot uploads are capped at 5 MB and must be image files.
 - The "tap to pay" QR link uses a `upi://` deep link, which only opens an app on mobile devices. On desktop, runners scan the QR with their phone instead.
 - The payment step also requires a voluntary-participation liability declaration, separate from the fitness disclaimer in Section 3. Payment fields stay visible but are disabled until it's checked.

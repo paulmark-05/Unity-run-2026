@@ -263,9 +263,9 @@
     const closed = status.closedByDate;
 
     const runCapNote = document.getElementById('runCapNote');
-    if (runCapNote && run) runCapNote.textContent = `registered · of ${run.cap}`;
+    if (runCapNote && run) runCapNote.textContent = `seats left · of ${run.cap}`;
     const walkCapNote = document.getElementById('walkCapNote');
-    if (walkCapNote && walk) walkCapNote.textContent = `registered · of ${walk.cap}`;
+    if (walkCapNote && walk) walkCapNote.textContent = `seats left · of ${walk.cap}`;
     if (run && run.cap) groupCaps.run = run.cap;
     if (walk && walk.cap) groupCaps.walk = walk.cap;
 
@@ -595,17 +595,22 @@
     }, 150);
   }
 
-  function setCounter(group, value) {
+  // Shows seats *remaining*, counting down — not how many have registered.
+  // registered is total sign-ups (any payment status; a slot is held the
+  // moment someone registers, same number the cap check enforces against).
+  function setCounter(group, registered) {
     const el = document.querySelector(`.flip-group[data-group="${group}"]`);
     if (!el) return;
+    const cap = groupCaps[group] || 1;
+    const taken = Math.max(0, registered);
+    const seatsLeft = Math.max(0, cap - taken);
     const cells = el.querySelectorAll('.flip-cell');
-    const str = String(Math.max(0, value)).padStart(cells.length, '0').slice(-cells.length);
+    const str = String(seatsLeft).padStart(cells.length, '0').slice(-cells.length);
     cells.forEach((cell, i) => flipCellTo(cell, str[i]));
 
     const bar = document.getElementById(`${group}BarFill`);
     if (bar) {
-      const cap = groupCaps[group] || 1;
-      bar.style.width = `${Math.min(100, (Math.max(0, value) / cap) * 100)}%`;
+      bar.style.width = `${Math.min(100, (taken / cap) * 100)}%`;
     }
   }
 
