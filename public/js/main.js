@@ -25,6 +25,8 @@
   let upiOrgId = '159020';
   let upiMerchantCode = '7800';
   let bankDetails = null;
+  let emailVerified = false;
+  let verifiedEmail = null;
 
   const GROUP_OF_CATEGORY = { '6K': 'run', '4K': 'walk' };
   // Cached so the bento tiles' progress bars can be redrawn from socket
@@ -132,6 +134,9 @@
       if (!getFieldValue('bloodGroup')) return 'Please select your blood group.';
       const email = getFieldValue('email');
       if (!/^\S+@\S+\.\S+$/.test(email)) return 'Please enter a valid email address.';
+      if (!emailVerified || verifiedEmail !== email.toLowerCase()) {
+        return 'Please verify your email address with the code sent to it.';
+      }
       const mobile = getFieldValue('mobile');
       if (!/^[0-9+\-\s]{7,15}$/.test(mobile)) return 'Please enter a valid mobile number.';
       if (!getFieldValue('emergencyName')) return 'Please enter an emergency contact name.';
@@ -439,6 +444,91 @@
     hideError();
     updatePaymentGate();
   });
+
+  // ---------- Email OTP verification ----------
+  (function initEmailOtp() {
+    const emailInput = document.getElementById('email');
+    const sendOtpBtn = document.getElementById('sendOtpBtn');
+    const otpRow = document.getElementById('otpRow');
+    const emailOtpInput = document.getElementById('emailOtp');
+    const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+    const otpStatus = document.getElementById('otpStatus');
+    if (!emailInput || !sendOtpBtn) return;
+
+    function setStatus(message, kind) {
+      otpStatus.textContent = message;
+      otpStatus.className = `otp-status${kind ? ` ${kind}` : ''}`;
+    }
+
+    function resetVerification() {
+      if (!emailVerified) return;
+      emailVerified = false;
+      verifiedEmail = null;
+      sendOtpBtn.hidden = false;
+      otpRow.hidden = true;
+      setStatus('', '');
+    }
+
+    // Any edit to an already-verified email invalidates that verification —
+    // otherwise a runner could verify one address, then swap in another.
+    emailInput.addEventListener('input', resetVerification);
+
+    sendOtpBtn.addEventListener('click', async () => {
+      const email = emailInput.value.trim();
+      if (!/^\S+@\S+\.\S+$/.test(email)) {
+        setStatus('Enter a valid email address first.', 'error');
+        return;
+      }
+      sendOtpBtn.disabled = true;
+      sendOtpBtn.textContent = 'Sending…';
+      try {
+        const res = await fetch('api/send-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Could not send the code.');
+        otpRow.hidden = false;
+        emailOtpInput.value = '';
+        emailOtpInput.focus();
+        setStatus('Code sent — check your inbox.', '');
+      } catch (err) {
+        setStatus(err.message, 'error');
+      } finally {
+        sendOtpBtn.disabled = false;
+        sendOtpBtn.textContent = 'Send Code';
+      }
+    });
+
+    verifyOtpBtn.addEventListener('click', async () => {
+      const email = emailInput.value.trim();
+      const otp = emailOtpInput.value.trim();
+      if (!otp) {
+        setStatus('Enter the code from your email.', 'error');
+        return;
+      }
+      verifyOtpBtn.disabled = true;
+      try {
+        const res = await fetch('api/verify-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, otp }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Incorrect code.');
+        emailVerified = true;
+        verifiedEmail = email.toLowerCase();
+        otpRow.hidden = true;
+        sendOtpBtn.hidden = true;
+        setStatus('✓ Email verified', 'success');
+      } catch (err) {
+        setStatus(err.message, 'error');
+      } finally {
+        verifyOtpBtn.disabled = false;
+      }
+    });
+  })();
 
   document.querySelectorAll('.js-open-register').forEach((btn) => {
     btn.addEventListener('click', openModal);

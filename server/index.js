@@ -223,6 +223,82 @@ function validateRegistration(data) {
   return null;
 }
 
+// Email OTP verification. In-memory only — this runs as a single Node
+// process, and codes are short-lived, so there's no need for a database.
+// Keyed by lowercased email; cleared on successful registration or expiry.
+const otpStore = new Map();
+const OTP_TTL_MS = 10 * 60 * 1000;
+const OTP_RESEND_COOLDOWN_MS = 30 * 1000;
+const OTP_MAX_ATTEMPTS = 5;
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [email, entry] of otpStore) {
+    if (now > entry.expiresAt) otpStore.delete(email);
+  }
+}, 15 * 60 * 1000).unref();
+
+function generateOtp() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+site.post('/api/send-otp', async (req, res) => {
+  const email = String(req.body.email || '').trim().toLowerCase();
+  if (!/^\S+@\S+\.\S+$/.test(email)) {
+    return res.status(400).json({ error: 'Please enter a valid email address.' });
+  }
+
+  const existing = otpStore.get(email);
+  if (existing && Date.now() - existing.sentAt < OTP_RESEND_COOLDOWN_MS) {
+    return res.status(429).json({ error: 'Please wait a few seconds before requesting another code.' });
+  }
+
+  const otp = generateOtp();
+  otpStore.set(email, { otp, expiresAt: Date.now() + OTP_TTL_MS, attempts: 0, verified: false, sentAt: Date.now() });
+
+  try {
+    await sendMail({
+      to: email,
+      subject: 'Your Unity Run 2026 verification code',
+      body: [
+        `Your verification code is: ${otp}`,
+        '',
+        'This code expires in 10 minutes. If you did not request this, you can ignore this email.',
+        '',
+        'Zila Sainik Board, North 24 Parganas',
+      ].join('\n'),
+    });
+  } catch (err) {
+    console.error('could not send OTP email:', err.message);
+    otpStore.delete(email);
+    return res.status(500).json({ error: 'Could not send the verification email right now. Please try again.' });
+  }
+
+  res.json({ sent: true });
+});
+
+site.post('/api/verify-otp', (req, res) => {
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const otp = String(req.body.otp || '').trim();
+  const entry = otpStore.get(email);
+
+  if (!entry) return res.status(400).json({ error: 'Request a verification code first.' });
+  if (Date.now() > entry.expiresAt) {
+    otpStore.delete(email);
+    return res.status(400).json({ error: 'That code has expired. Please request a new one.' });
+  }
+  if (entry.attempts >= OTP_MAX_ATTEMPTS) {
+    return res.status(429).json({ error: 'Too many incorrect attempts. Please request a new code.' });
+  }
+  if (otp !== entry.otp) {
+    entry.attempts += 1;
+    return res.status(400).json({ error: 'Incorrect code. Please try again.' });
+  }
+
+  entry.verified = true;
+  res.json({ verified: true });
+});
+
 site.post('/api/register', upload.single('paymentScreenshot'), async (req, res) => {
   try {
     const registration = req.body;
@@ -241,6 +317,11 @@ site.post('/api/register', upload.single('paymentScreenshot'), async (req, res) 
     const validationError = validateRegistration(registration);
     if (validationError) {
       return res.status(400).json({ error: validationError });
+    }
+
+    const otpEntry = otpStore.get(String(registration.email || '').trim().toLowerCase());
+    if (!otpEntry || !otpEntry.verified) {
+      return res.status(400).json({ error: 'Please verify your email address before submitting.' });
     }
     if (!req.file) {
       return res.status(400).json({ error: 'Please upload a screenshot of your UPI payment.' });
@@ -300,6 +381,8 @@ site.post('/api/register', upload.single('paymentScreenshot'), async (req, res) 
       registration.signature,
       '', // Confirmation Sent — filled in by the sheet's confirmation script
     ]);
+
+    otpStore.delete(String(registration.email || '').trim().toLowerCase());
 
     // Provisional receipt. The final confirmation goes out from the sheet once
     // an organizer has checked the payment against the bank.

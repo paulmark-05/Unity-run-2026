@@ -112,6 +112,8 @@ function sendPendingConfirmations() {
       '',
       'Please bring this email and a photo ID to collect your bib and T-shirt.',
       '',
+      'See you there!',
+      '',
       ORGANIZER_NAME,
     ].join('\n');
 

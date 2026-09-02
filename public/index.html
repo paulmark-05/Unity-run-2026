@@ -255,7 +255,15 @@
           </div>
           <div class="f-group">
             <label class="f-label" for="email">Email Address</label>
-            <input class="f-input" id="email" name="email" type="email" placeholder="Confirmation will be sent here" required />
+            <div class="email-verify-row">
+              <input class="f-input" id="email" name="email" type="email" placeholder="Confirmation will be sent here" required />
+              <button type="button" class="btn btn-outline btn-otp" id="sendOtpBtn">Send Code</button>
+            </div>
+            <div class="otp-row" id="otpRow" hidden>
+              <input class="f-input otp-input" id="emailOtp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code" />
+              <button type="button" class="btn btn-outline btn-otp" id="verifyOtpBtn">Verify</button>
+            </div>
+            <div class="otp-status" id="otpStatus"></div>
           </div>
           <fieldset class="fieldset f-group">
             <legend class="legend">Gender</legend>

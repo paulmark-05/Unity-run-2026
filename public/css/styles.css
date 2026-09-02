@@ -714,6 +714,26 @@ footer.site { background: var(--paper); color: var(--ink-soft); padding: 44px 0;
 .f-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .f-row.three { grid-template-columns: 1fr 1fr 1fr; }
 
+.email-verify-row { display: flex; gap: 8px; }
+.email-verify-row .f-input { flex: 1; min-width: 0; }
+.btn-otp { padding: 0 16px; font-size: 0.66rem; flex-shrink: 0; white-space: nowrap; }
+.btn-otp:disabled { opacity: 0.55; cursor: not-allowed; }
+.otp-row { display: flex; gap: 8px; margin-top: 10px; }
+.otp-row .otp-input {
+  max-width: 140px;
+  flex: none;
+  letter-spacing: 0.3em;
+  text-align: center;
+  font-family: 'Inter', Arial, system-ui, sans-serif;
+}
+.otp-status {
+  font-family: 'Inter', Arial, system-ui, sans-serif;
+  font-size: 0.76rem;
+  margin-top: 8px;
+}
+.otp-status.error { color: var(--red); }
+.otp-status.success { color: var(--navy); font-weight: 700; }
+
 .pill-row { display: flex; gap: 10px; flex-wrap: wrap; }
 .pill-row input { position: absolute; opacity: 0; pointer-events: none; }
 .pill {

@@ -109,7 +109,18 @@ emails use — set a row to `Confirmed` and the counter picks it up within
 No extra setup needed beyond what's already above; it uses the same Google
 Sheet and Apps Script deployment as everything else on this page.
 
-### 7. Photo gallery
+### 7. Email verification (OTP)
+Before a runner can finish Step 1, they must verify their email with a
+6-digit code sent via the same Apps Script mail bridge — `POST /api/send-otp`
+generates and emails it, `POST /api/verify-otp` checks it. Codes live 10
+minutes, allow 5 wrong attempts before requiring a resend, and there's a
+30-second cooldown between resends. `/api/register` re-checks server-side
+that the submitted email was actually verified, so this can't be bypassed
+by skipping the UI. Codes are kept in memory only (a `Map` in
+`server/index.js`) — fine for a single Node process, but they don't survive
+a restart or scale to multiple instances.
+
+### 8. Photo gallery
 Each year gets its own folder under `public/assets/gallery/<year>/`, populated
 from a shared Google Drive folder (needs only "Anyone with the link can
 view" — no need to add the service account as a collaborator):
@@ -124,7 +135,7 @@ and redeploy — the gallery has no Drive dependency at runtime, it just
 serves whatever's checked in. Re-run the same command any time the source
 folder changes to resync (it overwrites that year's files each time).
 
-### 8. Results
+### 9. Results
 Results only apply to the timed 6K run (the 4K walk is untimed, no
 rankings). Fill in the **Results** tab of the same Google Sheet after the
 event — columns are `Year | Category | Gender | Rank | Bib No | Name |
@@ -137,7 +148,7 @@ year with no rows for a category shows "Result will be published after
 completion of the event"; once rows exist, it shows the top 2 male/female
 finishers per category followed by the full sorted results table.
 
-### 9. Deploy to Render
+### 10. Deploy to Render
 1. Push this repo to GitHub (already done if you're reading this from the repo).
 2. On [render.com](https://render.com), create a **New Web Service**, connect the `Unity-run-2026` GitHub repo.
 3. Build command: `npm install`. Start command: `npm start`.
@@ -146,7 +157,7 @@ finishers per category followed by the full sorted results table.
 
 ## Notes
 - Entry fees: ₹500 for the 6K timed run, ₹300 for the 4K walk (early bird pricing, ₹100/₹50 off the regular ₹600/₹350). Change the `FEES` object in `server/index.js`, then rerun `npm run qr` so the QR amounts match.
-- Payment is **not** automatically verified. Every registration lands in the sheet as `Pending verification`; an organizer opens the linked screenshot, matches the transaction reference against the bank/UPI statement, and updates that cell to `Confirmed` — this also feeds the live counters and triggers the final confirmation email. Budget time for this before the event.
+- Payment is **not** automatically verified. Every registration lands in the sheet as `Pending verification`; an organizer opens the linked screenshot, matches the transaction reference against the bank/UPI statement, and updates that cell to `Confirmed` — this also feeds the live counters and triggers the final confirmation email. Budget time for this before the event. The sheet has a filter across the header row and a dropdown (Pending verification / Confirmed / Rejected) on the Payment Status column to make this faster.
 - Screenshot uploads are capped at 5 MB and must be image files.
 - The "tap to pay" QR link uses a `upi://` deep link, which only opens an app on mobile devices. On desktop, runners scan the QR with their phone instead.
 - The payment step also requires a voluntary-participation liability declaration, separate from the fitness disclaimer in Section 3. Payment fields stay visible but are disabled until it's checked.
