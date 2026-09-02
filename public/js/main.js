@@ -319,26 +319,29 @@
     if (qrImage) qrImage.src = `assets/upi-qr-${amount}.png`;
     const qrAmount = document.getElementById('upiQrAmount');
     if (qrAmount) qrAmount.textContent = `₹${amount}`;
-    // The tap-to-pay link only needs the fields every UPI app's deep-link
-    // handler is guaranteed to support (pa/pn/tn/am/cu). The printed QR
-    // mirrors the bank's own QR exactly, including its extra merchant
-    // fields (ver/mode/purpose/orgid/mc) — but those aren't part of the
-    // standard "pay" intent, and a tap-triggered app-switch goes through a
-    // different, often stricter parser than a QR scan, so apps that
-    // silently reject or mishandle the unrecognised extras there still
-    // scan the QR fine. Also build the query by hand rather than via
-    // URLSearchParams, which encodes spaces as "+" — correct for an HTML
-    // form body, but some UPI apps' lightweight parsers only understand
-    // "%20" and don't decode "+" back to a space.
+    // This is a merchant UPI ID (registered with a specific orgid/merchant
+    // category code at the bank) — a payment request missing those fields
+    // opens fine and even reaches the PIN screen, but the bank's backend
+    // then rejects it at settlement since it can't route/attribute the
+    // payment to the merchant account. The printed QR includes them and
+    // works end-to-end, so the tap link needs to mirror it exactly. Only
+    // real fix kept from the last attempt: build the query by hand with
+    // %20 instead of letting URLSearchParams encode spaces as "+", which
+    // some UPI apps' lightweight parsers don't decode back to a space.
     const vpa = (upiVpa || '').trim();
     const payeeName = (upiPayeeName || '').trim();
     const upiEncode = (v) => encodeURIComponent(v);
     const params = [
+      'ver=01',
       `pa=${upiEncode(vpa)}`,
       `pn=${upiEncode(payeeName)}`,
       `tn=${upiEncode(`Unity Run 2026 ${category || ''}`.trim())}`,
       `am=${upiEncode(String(amount))}`,
       'cu=INR',
+      'mode=00',
+      'purpose=00',
+      `orgid=${upiEncode(upiOrgId)}`,
+      `mc=${upiEncode(upiMerchantCode)}`,
     ].join('&');
     link.href = `upi://pay?${params}`;
     // Display only — lowercase reads friendlier than a shouty all-caps VPA.
