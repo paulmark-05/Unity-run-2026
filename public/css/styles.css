@@ -314,6 +314,7 @@ h2.section-title { font-size: clamp(1.8rem, 3.2vw, 2.4rem); line-height: 1.1; ma
 .d-item h3 { font-size: 1.4rem; margin: 12px 0 10px; color: var(--navy); }
 .d-item p { color: var(--ink-soft); line-height: 1.65; font-size: 0.93rem; }
 .d-item p.assemble-note { font-weight: 700; color: var(--red); font-size: 0.98rem; }
+.confirmation-note { font-weight: 700; color: var(--red); font-size: 0.86rem; }
 
 /* ---------- PRIZES ---------- */
 .prize-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 28px; margin-top: 32px; }

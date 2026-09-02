@@ -314,23 +314,31 @@
     if (qrImage) qrImage.src = `assets/upi-qr-${amount}.png`;
     const qrAmount = document.getElementById('upiQrAmount');
     if (qrAmount) qrAmount.textContent = `₹${amount}`;
-    // Mirrors the bank QR's parameters so UPI apps treat it as the same merchant.
-    const params = new URLSearchParams({
-      ver: '01',
-      pa: upiVpa,
-      pn: upiPayeeName,
-      tn: `Unity Run 2026 ${category || ''}`.trim(),
-      am: String(amount),
-      cu: 'INR',
-      mode: '00',
-      purpose: '00',
-      orgid: upiOrgId,
-      mc: upiMerchantCode,
-    });
-    link.href = `upi://pay?${params.toString()}`;
+    // The tap-to-pay link only needs the fields every UPI app's deep-link
+    // handler is guaranteed to support (pa/pn/tn/am/cu). The printed QR
+    // mirrors the bank's own QR exactly, including its extra merchant
+    // fields (ver/mode/purpose/orgid/mc) — but those aren't part of the
+    // standard "pay" intent, and a tap-triggered app-switch goes through a
+    // different, often stricter parser than a QR scan, so apps that
+    // silently reject or mishandle the unrecognised extras there still
+    // scan the QR fine. Also build the query by hand rather than via
+    // URLSearchParams, which encodes spaces as "+" — correct for an HTML
+    // form body, but some UPI apps' lightweight parsers only understand
+    // "%20" and don't decode "+" back to a space.
+    const vpa = (upiVpa || '').trim();
+    const payeeName = (upiPayeeName || '').trim();
+    const upiEncode = (v) => encodeURIComponent(v);
+    const params = [
+      `pa=${upiEncode(vpa)}`,
+      `pn=${upiEncode(payeeName)}`,
+      `tn=${upiEncode(`Unity Run 2026 ${category || ''}`.trim())}`,
+      `am=${upiEncode(String(amount))}`,
+      'cu=INR',
+    ].join('&');
+    link.href = `upi://pay?${params}`;
     // Display only — lowercase reads friendlier than a shouty all-caps VPA.
     // The actual payment param above keeps the exact configured value.
-    vpaText.textContent = upiVpa.toLowerCase();
+    vpaText.textContent = vpa.toLowerCase();
     vpaLine.hidden = false;
   }
 
