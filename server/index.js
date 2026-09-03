@@ -33,19 +33,25 @@ const WALK_CAP = 300; // 4K only
 const GROUP_OF_CATEGORY = { '6K': 'run', '4K': 'walk' };
 
 /** "dd-mm-yyyy HH:MM:SS" in IST, regardless of the server's own timezone. */
+/**
+ * "dd-mm HH:MM IST". The trailing "IST" is deliberate, not just labelling:
+ * Sheets' USER_ENTERED parser auto-converts anything that looks like a
+ * plain date/time into its internal date-serial number (which is what
+ * caused the previous "dd-mm-yyyy HH:MM:SS" format to show up as a raw
+ * number like 46062.94049 in some rows) — appending non-numeric text
+ * breaks that pattern match, so this is stored as plain text instead.
+ */
 function timestampIST() {
   const parts = new Intl.DateTimeFormat('en-GB', {
     timeZone: 'Asia/Kolkata',
     day: '2-digit',
     month: '2-digit',
-    year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit',
     hour12: false,
   }).formatToParts(new Date());
   const get = (type) => parts.find((p) => p.type === type).value;
-  return `${get('day')}-${get('month')}-${get('year')} ${get('hour')}:${get('minute')}:${get('second')}`;
+  return `${get('day')}-${get('month')} ${get('hour')}:${get('minute')} IST`;
 }
 
 /** The date <input> submits "yyyy-mm-dd" — the sheet wants "dd-mm-yyyy". */
