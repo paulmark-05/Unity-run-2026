@@ -221,8 +221,9 @@ function sendPendingConfirmations() {
 
     MailApp.sendEmail({ to: email, subject: subject, body: body, htmlBody: wrapEmailHtml(contentHtml) });
 
+    const sentAt = Utilities.formatDate(new Date(), 'Asia/Kolkata', 'dd/MM HH:mm');
     sheet.getRange(i + 1, COL.confirmationSent).setValue(
-      (confirmed ? 'Confirmed' : 'Rejected') + ' – ' + new Date().toLocaleString()
+      (confirmed ? 'Confirmed' : 'Rejected') + ' – ' + sentAt
     );
     SpreadsheetApp.flush();
   }
