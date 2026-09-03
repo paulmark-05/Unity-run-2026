@@ -54,10 +54,18 @@ function timestampIST() {
   return `${get('day')}-${get('month')} ${get('hour')}:${get('minute')} IST`;
 }
 
-/** The date <input> submits "yyyy-mm-dd" — the sheet wants "dd-mm-yyyy". */
+/**
+ * The date <input> submits "yyyy-mm-dd" — the sheet wants "dd-mm-yyyy".
+ * Sheets' USER_ENTERED parser recognizes some dd-mm-yyyy strings as dates
+ * and silently converts them to its internal date-serial number (only when
+ * day and month are both <= 12, so it's ambiguous enough to parse — e.g.
+ * "11-01-1998" became "35601"). A leading apostrophe is the standard Sheets
+ * convention for forcing literal text no matter what the content looks
+ * like; it isn't shown in the cell, verified via the API directly.
+ */
 function dobToDisplay(isoDob) {
   const [y, m, d] = String(isoDob || '').split('-');
-  return y && m && d ? `${d}-${m}-${y}` : (isoDob || '');
+  return y && m && d ? `'${d}-${m}-${y}` : (isoDob || '');
 }
 
 /** Age in whole years as of today, from a "yyyy-mm-dd" date of birth. */
