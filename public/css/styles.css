@@ -6,6 +6,9 @@
   --red-deep: #9A151F;
   --sky: #46AEE0;
   --sky-pale: #EAF6FD;
+  --teal: #0E8A82;
+  --teal-deep: #0A6961;
+  --teal-pale: #E3F5F3;
   --paper: #FFFFFF;
   --ink: #14161C;
   --ink-soft: #3C424E;
@@ -785,34 +788,6 @@ footer.site { background: var(--paper); color: var(--ink-soft); padding: 44px 0;
 .fee-line { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 20px 0; }
 .fee-line .k { font-size: 0.84rem; color: var(--ink-soft); }
 .fee-line .v { font-family: 'Inter', Arial, system-ui, sans-serif; font-weight: 700; font-size: 1.25rem; color: var(--navy); }
-/* UPI payment block */
-.upi-pay {
-  display: grid;
-  grid-template-columns: 190px 1fr;
-  gap: 22px;
-  align-items: center;
-  margin-bottom: 22px;
-}
-.upi-qr {
-  display: block;
-  border: 1px solid var(--line);
-  padding: 12px 12px 8px;
-  background: #fff;
-  text-decoration: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-.upi-qr:hover { border-color: var(--navy); box-shadow: 0 8px 22px -12px rgba(27,34,96,0.45); }
-.upi-qr img { width: 100%; height: auto; }
-.upi-qr-hint {
-  display: block;
-  text-align: center;
-  font-size: 0.66rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-weight: 700;
-  color: var(--red);
-  margin-top: 8px;
-}
 .upi-instructions { margin: 0; font-size: 0.88rem; line-height: 1.6; color: var(--ink-soft); }
 .instructions-block {
   display: flex;
@@ -833,27 +808,40 @@ footer.site { background: var(--paper); color: var(--ink-soft); padding: 44px 0;
   color: var(--navy);
 }
 .instructions-block .confirmation-note { margin: 0; }
-.upi-vpa-line[hidden] { display: none; }
-.upi-vpa-line {
+.upi-steps {
+  margin: 0;
+  padding-left: 20px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  border: 1px solid var(--line);
-  border-left: 3px solid var(--sky);
-  padding: 10px 12px;
-  background: var(--sky-pale);
+  gap: 8px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
 }
-.upi-vpa-line .v {
-  font-family: 'Inter', Arial, system-ui, sans-serif;
+.upi-steps li::marker { color: var(--navy); font-weight: 700; }
+.qr-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--line);
+  padding: 20px 20px 16px;
+  background: #fff;
+  margin-bottom: 20px;
+}
+.qr-image { width: 100%; max-width: 220px; height: auto; }
+.qr-caption {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
   font-weight: 700;
-  font-size: 0.92rem;
-  color: var(--navy);
-  word-break: break-all;
+  color: var(--red);
 }
+#upiPayDetails[hidden] { display: none; }
 .bank-details {
-  border: 1px solid var(--line);
-  border-left: 3px solid var(--navy);
-  background: var(--sky-pale);
+  border: 1px solid rgba(14,138,130,0.3);
+  border-left: 4px solid var(--teal);
+  background: var(--teal-pale);
   margin: 0 0 16px;
   padding: 14px 16px;
   display: grid;
@@ -865,7 +853,8 @@ footer.site { background: var(--paper); color: var(--ink-soft); padding: 44px 0;
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--ink-soft);
+  color: var(--teal-deep);
+  font-weight: 700;
   align-self: center;
 }
 .bank-details dd {
@@ -876,6 +865,7 @@ footer.site { background: var(--paper); color: var(--ink-soft); padding: 44px 0;
   color: var(--navy);
   word-break: break-word;
 }
+#upiPayDetails dd { font-size: 1.15rem; }
 .bank-details .missing {
   font-weight: 400;
   font-style: italic;
@@ -1021,10 +1011,9 @@ footer.site { background: var(--paper); color: var(--ink-soft); padding: 44px 0;
     line-height: 1.3;
   }
   .form-steps .step-dot { display: none; }
-  .upi-pay { grid-template-columns: 1fr; }
-  .upi-qr { max-width: 240px; margin: 0 auto; }
   .bank-details { grid-template-columns: 1fr; gap: 2px; }
   .bank-details dd { margin-bottom: 10px; }
+  #upiPayDetails dd { font-size: 0.98rem; }
   /* Larger tap targets for fingers — the 32px desktop pill height is too small to tap reliably. */
   .pill { padding: 13px 16px; }
   .btn { padding: 15px 24px; }

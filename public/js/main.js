@@ -22,8 +22,6 @@
   let fees = { '6K': 500, '4K': 300 };
   let upiVpa = null;
   let upiPayeeName = 'Unity Run 2026';
-  let upiOrgId = '159020';
-  let upiMerchantCode = '7800';
   let bankDetails = null;
   let emailVerified = false;
   let verifiedEmail = null;
@@ -44,8 +42,6 @@
         if (cfg.fees) fees = cfg.fees;
         upiVpa = cfg.upiVpa;
         if (cfg.upiPayeeName) upiPayeeName = cfg.upiPayeeName;
-        if (cfg.upiOrgId) upiOrgId = cfg.upiOrgId;
-        if (cfg.upiMerchantCode) upiMerchantCode = cfg.upiMerchantCode;
         bankDetails = cfg.bankDetails || null;
         applyRegistrationStatus(cfg.registration);
         renderUpiDetails();
@@ -301,53 +297,26 @@
   }
 
   function renderUpiDetails() {
-    const link = document.getElementById('upiLink');
-    const vpaLine = document.getElementById('upiVpaLine');
+    const details = document.getElementById('upiPayDetails');
     const vpaText = document.getElementById('upiVpaText');
-    if (!link) return;
+    if (!details) return;
 
     if (!upiVpa) {
-      link.removeAttribute('href');
-      vpaLine.hidden = true;
+      details.hidden = true;
       return;
     }
     const category = getFieldValue('category');
     const amount = fees[category] || 500;
 
-    // Each fee has its own QR with that amount pre-filled.
-    const qrImage = document.querySelector('.upi-qr img');
-    if (qrImage) qrImage.src = `assets/upi-qr-${amount}.png`;
-    const qrAmount = document.getElementById('upiQrAmount');
-    if (qrAmount) qrAmount.textContent = `₹${amount}`;
-    // This is a merchant UPI ID (registered with a specific orgid/merchant
-    // category code at the bank) — a payment request missing those fields
-    // opens fine and even reaches the PIN screen, but the bank's backend
-    // then rejects it at settlement since it can't route/attribute the
-    // payment to the merchant account. The printed QR includes them and
-    // works end-to-end, so the tap link needs to mirror it exactly. Only
-    // real fix kept from the last attempt: build the query by hand with
-    // %20 instead of letting URLSearchParams encode spaces as "+", which
-    // some UPI apps' lightweight parsers don't decode back to a space.
-    const vpa = (upiVpa || '').trim();
-    const payeeName = (upiPayeeName || '').trim();
-    const upiEncode = (v) => encodeURIComponent(v);
-    const params = [
-      'ver=01',
-      `pa=${upiEncode(vpa)}`,
-      `pn=${upiEncode(payeeName)}`,
-      `tn=${upiEncode(`Unity Run 2026 ${category || ''}`.trim())}`,
-      `am=${upiEncode(String(amount))}`,
-      'cu=INR',
-      'mode=00',
-      'purpose=00',
-      `orgid=${upiEncode(upiOrgId)}`,
-      `mc=${upiEncode(upiMerchantCode)}`,
-    ].join('&');
-    link.href = `upi://pay?${params}`;
-    // Display only — lowercase reads friendlier than a shouty all-caps VPA.
-    // The actual payment param above keeps the exact configured value.
-    vpaText.textContent = vpa.toLowerCase();
-    vpaLine.hidden = false;
+    const payeeText = document.getElementById('upiPayeeText');
+    if (payeeText) payeeText.textContent = (upiPayeeName || '').trim();
+    const amountText = document.getElementById('upiAmountText');
+    if (amountText) amountText.textContent = `₹${amount}`;
+    // Display only, lowercase reads friendlier than a shouty all-caps VPA —
+    // the runner pays this manually from their own UPI app, so there's no
+    // payment param to keep in sync with it.
+    vpaText.textContent = (upiVpa || '').trim().toLowerCase();
+    details.hidden = false;
   }
 
   function renderSummary() {

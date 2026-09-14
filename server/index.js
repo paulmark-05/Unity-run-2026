@@ -157,8 +157,6 @@ site.get('/api/config', async (req, res) => {
     counts: status.stats ? status.stats.totalByCategory : { '6K': 0, '4K': 0 },
     upiVpa: process.env.UPI_VPA || null,
     upiPayeeName: process.env.UPI_PAYEE_NAME || 'Unity Run 2026',
-    upiOrgId: process.env.UPI_ORG_ID || '159020',
-    upiMerchantCode: process.env.UPI_MERCHANT_CODE || '7800',
     bankDetails: {
       accountName: process.env.BANK_ACCOUNT_NAME || '',
       accountNumber: process.env.BANK_ACCOUNT_NUMBER || '',

@@ -382,40 +382,42 @@
           <div class="f-group">
             <label class="f-label" for="paymentMethod">How would you like to pay?</label>
             <select class="f-select" id="paymentMethod" name="paymentMethod">
-              <option value="UPI">UPI / QR code</option>
+              <option value="UPI">UPI</option>
               <option value="Bank Transfer">Bank transfer (NEFT / IMPS / RTGS)</option>
             </select>
           </div>
 
-          <p class="confirmation-note">Read the instructions carefully before initiating payment.</p>
+          <p class="confirmation-note">Please read the instructions carefully before you pay.</p>
 
           <!-- UPI -->
           <div id="upiBlock">
             <div class="subhead">Pay via UPI</div>
             <div class="instructions-block">
-              <div class="instructions-heading">Instructions:</div>
-              <p class="upi-instructions">
-                <strong>Scan this QR with any UPI app (GPay, PhonePe, Paytm)</strong> — this is the most reliable way to pay.
-              </p>
-              <p class="upi-instructions">
-                On mobile you can also tap the QR above to open your UPI app directly. If that doesn't go through after entering your PIN, please scan the QR instead rather than retrying the tap.
-              </p>
-              <p class="upi-instructions">
-                After paying, take a screenshot of the confirmation and upload it below.
-              </p>
+              <div class="instructions-heading">How to pay:</div>
+              <ol class="upi-steps">
+                <li>Take a screenshot of the QR code shown below.</li>
+                <li>Open your UPI app (like GPay, PhonePe, Paytm or BHIM) and tap the scan button.</li>
+                <li>Look for a small picture or gallery icon on the scan screen and tap it, then select the screenshot you just took.</li>
+                <li>Type in the exact amount shown below (it will not be filled in for you) and finish the payment.</li>
+                <li>After paying, take a screenshot of the payment confirmation and upload it below.</li>
+              </ol>
+              <p class="upi-instructions">Please check the UPI ID and amount carefully before paying. Our team checks every payment by hand.</p>
               <p class="confirmation-note">You will receive a payment confirmation email within 2 days.</p>
             </div>
 
-            <div class="upi-pay">
-              <a class="upi-qr" id="upiLink" href="#" aria-label="Pay via UPI">
-                <img src="assets/upi-qr-500.png" alt="UPI payment QR code" />
-                <span class="upi-qr-hint sans">Scan to pay <span id="upiQrAmount">₹500</span></span>
-              </a>
-              <div class="upi-vpa-line" id="upiVpaLine" hidden>
-                <span class="k label">Paying to</span>
-                <span class="v" id="upiVpaText"></span>
-              </div>
+            <div class="qr-card">
+              <img class="qr-image" src="assets/upi-qr.png" alt="UPI QR code for Zila Sainik Board North 24 Parganas. Take a screenshot of this and scan it using your UPI app's gallery option." />
+              <span class="qr-caption sans">Scan &amp; Pay</span>
             </div>
+
+            <dl class="bank-details" id="upiPayDetails" hidden>
+              <dt>Pay to</dt>
+              <dd id="upiPayeeText"></dd>
+              <dt>UPI ID</dt>
+              <dd id="upiVpaText"></dd>
+              <dt>Amount to pay</dt>
+              <dd id="upiAmountText">₹500</dd>
+            </dl>
 
             <div class="f-row">
               <div class="f-group">
