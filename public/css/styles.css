@@ -789,6 +789,7 @@ footer.site { background: var(--paper); color: var(--ink-soft); padding: 44px 0;
 .fee-line .k { font-size: 0.84rem; color: var(--ink-soft); }
 .fee-line .v { font-family: 'Inter', Arial, system-ui, sans-serif; font-weight: 700; font-size: 1.25rem; color: var(--navy); }
 .upi-instructions { margin: 0; font-size: 0.88rem; line-height: 1.6; color: var(--ink-soft); }
+.contact-link { color: var(--navy); font-weight: 700; text-decoration: underline; }
 .instructions-block {
   display: flex;
   flex-direction: column;
