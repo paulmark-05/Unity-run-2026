@@ -5,7 +5,7 @@ Event website and registration system for Unity Run 2026 — Barasat Stadium, 27
 - Static landing page (`public/`)
 - 4-step registration form (Personal Details → Run Preferences → Disclaimer → Payment)
 - Payment by UPI (scan a static QR image, or pay manually to the UPI ID shown) or bank transfer — runners pay, then submit the account they paid from and a screenshot as proof
-- A 6K timed run (₹500, early bird) with separate men's and women's prizes, and a 4K fun walk (₹300, early bird)
+- A 6KM timed run (₹500, early bird) with separate men's and women's prizes, and a 4KM fun walk (₹300, early bird)
 - Provisional receipt on registration; final confirmation email once an organizer verifies the payment
 - Registrations are written to a Google Sheet; screenshots are uploaded to a Google Drive folder and linked from the sheet
 - Payments are verified manually by the organizers (each row lands as `Pending confirmation`)
@@ -96,9 +96,9 @@ To enable the final confirmation, add a trigger in the Apps Script editor:
 column so nobody is mailed twice.
 
 ### 5. Registration window
-Set in `server/index.js`: entries close end of **19 September 2026**. Slots are
-capped per group, not site-wide — the 6K run has a pool of **500**, the 4K
-walk has its own **300**. A full group disables just its own
+Set in `server/index.js`: entries close end of **24 September 2026**. Slots are
+capped per group, not site-wide — the 6KM run has a pool of **150**, the 4KM
+walk has its own **150**. A full group disables just its own
 pills on the form (`RUN_CAP` / `WALK_CAP` / `GROUP_OF_CATEGORY` in
 `server/index.js`); the whole form only shuts down once every group is full
 or the date has passed. Registrations are numbered in the order received.
@@ -139,7 +139,7 @@ serves whatever's checked in. Re-run the same command any time the source
 folder changes to resync (it overwrites that year's files each time).
 
 ### 9. Results
-Results only apply to the timed 6K run (the 4K walk is untimed, no
+Results only apply to the timed 6KM run (the 4KM walk is untimed, no
 rankings). Fill in the **Results** tab of the same Google Sheet after the
 event — columns are `Year | Category | Gender | Rank | Bib No | Name |
 Finish Time`. Format the Finish Time column as **Plain Text** before typing
@@ -159,8 +159,9 @@ finishers per category followed by the full sorted results table.
 5. Deploy. Render gives you a `https://unity-run-2026.onrender.com`-style URL; a custom domain can be attached later from the same dashboard.
 
 ## Notes
-- Entry fees: ₹500 for the 6K timed run, ₹300 for the 4K walk (early bird pricing, ₹100/₹50 off the regular ₹600/₹350). Change the `FEES` object in `server/index.js` — the UPI amount shown on the form reads from the same object, no separate step needed.
+- Entry fees: ₹500 for the 6KM timed run, ₹300 for the 4KM walk (early bird pricing, ₹100/₹50 off the regular ₹600/₹350). Change the `FEES` object in `server/index.js` — the UPI amount shown on the form reads from the same object, no separate step needed.
 - Payment is **not** automatically verified. Every registration lands in the sheet as `Pending confirmation`; an organizer opens the linked screenshot, matches the transaction reference against the bank/UPI statement, and picks `Confirmed` or `Rejected` from the Payment Status dropdown. `Confirmed` triggers the final confirmation email; `Rejected` triggers an email asking the runner to re-send their payment screenshot. The live seat counters aren't gated on this — they count every registration the moment it's submitted (same number the slot cap enforces against), not just confirmed ones. Budget time for verification before the event regardless. The sheet has a filter across the header row and a strict dropdown (Pending confirmation / Confirmed / Rejected) on the Payment Status column.
 - Screenshot uploads are capped at 5 MB and must be image files.
 - UPI payment is scan-only by design: the form shows a static QR image (screenshot it, then scan that screenshot from the UPI app's gallery/upload option) plus the UPI ID and amount as text for manual entry or double-checking, then the runner uploads a payment screenshot. There is no tappable `upi://` deep link — our merchant UPI ID doesn't support app-initiated/redirect payments (only inbound transfers and QR scans), so a deep link would let a runner reach the PIN screen and then fail after entering it.
 - The payment step also requires a voluntary-participation liability declaration, separate from the fitness disclaimer in Section 3. Payment fields stay visible but are disabled until it's checked.
+- The UPI transaction ID and bank UTR fields only require *something* to be entered — there's no format check on either. This is deliberate: the organizers sometimes hand out an offer code to type into that field instead of a real transaction ID, so the field can't assume a fixed shape.

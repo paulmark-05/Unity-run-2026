@@ -19,17 +19,17 @@ app.use('/', site);
 
 site.use(express.static(path.join(__dirname, '..', 'public')));
 
-const FEES = { '6K': 500, '4K': 300 }; // Early bird: ₹100 off 6K, ₹50 off 4K
+const FEES = { '6K': 500, '4K': 300 }; // Early bird: ₹100 off 6KM, ₹50 off 4KM
 const CATEGORY_LABELS = {
-  '6K': '6K Timed Run',
-  '4K': '4K Fun Walk',
+  '6K': '6KM Timed Run',
+  '4K': '4KM Fun Walk',
 };
 
-// Registration closes at the end of 19 September 2026, or once a category
-// group's slots are full — the 6K run and the 4K walk each have their own pool.
-const REGISTRATION_CLOSES = new Date('2026-09-19T23:59:59+05:30');
-const RUN_CAP = 500; // 6K only
-const WALK_CAP = 300; // 4K only
+// Registration closes at the end of 24 September 2026, or once a category
+// group's slots are full — the 6KM run and the 4KM walk each have their own pool.
+const REGISTRATION_CLOSES = new Date('2026-09-24T23:59:59+05:30');
+const RUN_CAP = 150; // 6KM only
+const WALK_CAP = 150; // 4KM only
 const GROUP_OF_CATEGORY = { '6K': 'run', '4K': 'walk' };
 
 /**
@@ -116,7 +116,7 @@ async function registrationStatus() {
 
   return {
     closedByDate,
-    closesOn: '19 September 2026',
+    closesOn: '24 September 2026',
     stats,
     groups: {
       run: { count: runCount, cap: RUN_CAP, full: runCount !== null && runCount >= RUN_CAP },
@@ -274,15 +274,15 @@ function validateRegistration(data) {
     if (!/^[A-Za-z]{4}0[A-Za-z0-9]{6}$/.test(data.payerIfsc || '')) {
       return 'Invalid IFSC code. It should look like SBIN0001234.';
     }
-    if (!/^[A-Za-z0-9]{6,30}$/.test(data.bankUtr || '')) {
-      return 'Invalid UTR / reference number.';
+    if (!String(data.bankUtr || '').trim()) {
+      return 'UTR / reference number is required.';
     }
   } else {
     if (!/^[\w.\-]{2,}@[\w.\-]{2,}$/.test(data.upiId || '')) {
       return 'Invalid UPI ID. It should look like name@bank.';
     }
-    if (!/^[A-Za-z0-9]{6,30}$/.test(data.upiTxnRef || '')) {
-      return 'Invalid UPI transaction ID.';
+    if (!String(data.upiTxnRef || '').trim()) {
+      return 'UPI transaction ID is required.';
     }
   }
 
@@ -382,11 +382,11 @@ site.post('/api/register', upload.single('paymentScreenshot'), async (req, res) 
 
     const status = await registrationStatus();
     if (status.closedByDate) {
-      return res.status(409).json({ error: 'Registration closed on 19 September 2026.' });
+      return res.status(409).json({ error: 'Registration closed on 24 September 2026.' });
     }
     if (!openFor(status, registration.category)) {
       const group = GROUP_OF_CATEGORY[registration.category];
-      const label = group === 'walk' ? '4K Walk' : '6K Run';
+      const label = group === 'walk' ? '4KM Walk' : '6KM Run';
       const cap = group === 'walk' ? WALK_CAP : RUN_CAP;
       return res.status(409).json({ error: `${label} registration is full — all ${cap} places have been taken.` });
     }

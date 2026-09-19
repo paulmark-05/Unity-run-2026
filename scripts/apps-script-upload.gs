@@ -35,6 +35,14 @@ const SHEET_TAB = 'Registrations';
 const ORGANIZER_NAME = 'Zila Sainik Board, North 24 Parganas';
 const LOGO_URL = 'https://unity-run-2026.zsb-barasat.in/assets/zsb-logo-transparent.png';
 
+// The sheet's Category column stores the short internal code ("6K"/"4K",
+// matching server/index.js) — this maps it to the display text shown in
+// emails, kept in sync with CATEGORY_LABELS in server/index.js by hand.
+const CATEGORY_LABELS = {
+  '6K': '6KM Timed Run',
+  '4K': '4KM Fun Walk',
+};
+
 /**
  * Wraps a block of content HTML in the branded email shell (logo + "ZSB
  * North 24 Parganas" headline, matching the site's navy/red/sky palette).
@@ -139,7 +147,8 @@ function sendPendingConfirmations() {
     const name = row[COL.fullName - 1];
     const regId = row[COL.registrationId - 1];
     const slNo = row[COL.slNo - 1];
-    const category = row[COL.category - 1];
+    const categoryCode = row[COL.category - 1];
+    const category = CATEGORY_LABELS[categoryCode] || categoryCode;
     const tshirt = row[COL.tshirt - 1];
 
     let subject, body, contentHtml;
@@ -158,7 +167,7 @@ function sendPendingConfirmations() {
         'Event details',
         '  Date:     Sunday, 27 September 2026',
         '  Venue:    Barasat Stadium',
-        '  Flag-off: 6:00 AM for the 6K run, followed by the 4K walk',
+        '  Flag-off: 6:00 AM for the 6KM run, followed by the 4KM walk',
         '  Report:   Please assemble at the venue by 5:00 AM',
         '',
         'Please bring this email and a photo ID to collect your bib and T-shirt.',
@@ -181,7 +190,7 @@ function sendPendingConfirmations() {
           '<div style="font-weight: bold; margin-bottom: 6px;">Event details</div>' +
           'Date: Sunday, 27 September 2026<br/>' +
           'Venue: Barasat Stadium<br/>' +
-          'Flag-off: 6:00 AM for the 6K run, followed by the 4K walk<br/>' +
+          'Flag-off: 6:00 AM for the 6KM run, followed by the 4KM walk<br/>' +
           'Report: Please assemble at the venue by 5:00 AM' +
         '</div>' +
         '<p>Please bring this email and a photo ID to collect your bib and T-shirt.</p>' +
