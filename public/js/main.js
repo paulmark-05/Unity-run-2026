@@ -10,6 +10,7 @@
   const formError = document.getElementById('formError');
   const successView = document.getElementById('successView');
   const formBodyForm = form;
+  const scrollGuide = document.getElementById('scrollGuide');
 
   const STEP_TITLES = [
     'SECTION 1 OF 4 · PERSONAL DETAILS',
@@ -57,6 +58,7 @@
   function closeModal() {
     modal.classList.remove('open');
     document.body.style.overflow = '';
+    scrollGuide.hidden = true;
   }
 
   function resetToStep1() {
@@ -67,6 +69,20 @@
     formBodyForm.style.display = 'block';
     showStep(1);
   }
+
+  // Hides the "scroll down to submit" guide once the submit button is
+  // actually on screen — it only makes sense while the runner still has to
+  // scroll to find it. `root: modal` because the modal itself scrolls, not
+  // the page behind it.
+  const scrollGuideObserver = new IntersectionObserver(
+    (entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      scrollGuide.hidden = currentStep !== 4 || entry.isIntersecting;
+    },
+    { root: modal, threshold: 0.6 }
+  );
+  scrollGuideObserver.observe(nextBtn);
 
   function showStep(n) {
     pages.forEach((p) => p.classList.toggle('active', Number(p.dataset.page) === n));
@@ -88,17 +104,61 @@
       renderBankDetails();
       showPaymentBlocks();
       updatePaymentGate();
+      scrollGuide.hidden = false;
     } else {
       nextBtn.disabled = false;
       nextBtn.append('Continue ');
       nextBtn.append(arrow);
+      scrollGuide.hidden = true;
     }
     hideError();
   }
 
-  function showError(message) {
+  // Scrolls the field that failed validation into the middle of the modal
+  // and flashes a red outline around it, so the runner sees exactly what's
+  // wrong instead of having to hunt through the step for a blank box.
+  function scrollToField(fieldName) {
+    if (!fieldName) return false;
+    const el = form.elements[fieldName];
+    if (!el) return false;
+    const node = el instanceof RadioNodeList ? el[0] : el;
+    if (!node) return false;
+    const target =
+      node.closest('.f-group') ||
+      node.closest('.fieldset') ||
+      node.closest('.waiver-check') ||
+      node;
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    target.classList.remove('field-invalid');
+    void target.offsetWidth; // restart the highlight animation on repeat errors
+    target.classList.add('field-invalid');
+    const clearHighlight = () => target.classList.remove('field-invalid');
+    target.addEventListener('input', clearHighlight, { once: true });
+    target.addEventListener('change', clearHighlight, { once: true });
+    const focusableTypes = ['text', 'email', 'tel', 'date', 'number', ''];
+    if (
+      typeof node.focus === 'function' &&
+      (node.tagName === 'SELECT' || node.tagName === 'TEXTAREA' || focusableTypes.includes(node.type))
+    ) {
+      node.focus({ preventScroll: true });
+    }
+    return true;
+  }
+
+  // `errorOrMessage` is either a plain string (server-side failures, which
+  // aren't tied to one on-screen field) or a { message, field } object from
+  // validateStep(). Either way this both shows the banner and scrolls
+  // whatever's relevant into view — the banner alone is easy to miss once
+  // the runner has scrolled down into a long step.
+  function showError(errorOrMessage) {
+    const isObj = errorOrMessage && typeof errorOrMessage === 'object';
+    const message = isObj ? errorOrMessage.message : errorOrMessage;
+    const field = isObj ? errorOrMessage.field : null;
     formError.textContent = message;
     formError.classList.add('show');
+    if (!scrollToField(field)) {
+      formError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   }
   function hideError() {
     formError.classList.remove('show');
@@ -122,57 +182,66 @@
     return String(str || '').trim().toLowerCase().replace(/\s+/g, ' ');
   }
 
+  // Returns { message, field } for the first problem found, or null if the
+  // step is valid. `field` is a form element name (matches form.elements[]
+  // and getFieldValue()) so the caller can scroll to and highlight exactly
+  // what needs fixing, instead of just showing a banner the runner has to
+  // hunt for.
+  function invalid(message, field) {
+    return { message, field };
+  }
+
   function validateStep(n) {
     if (n === 1) {
-      if (!getFieldValue('fullName')) return 'Please enter your full name.';
-      if (!getFieldValue('dob')) return 'Please enter your date of birth.';
-      if (!getFieldValue('gender')) return 'Please select a gender option.';
-      if (!getFieldValue('bloodGroup')) return 'Please select your blood group.';
+      if (!getFieldValue('fullName')) return invalid('Please enter your full name.', 'fullName');
+      if (!getFieldValue('dob')) return invalid('Please enter your date of birth.', 'dob');
+      if (!getFieldValue('gender')) return invalid('Please select a gender option.', 'gender');
+      if (!getFieldValue('bloodGroup')) return invalid('Please select your blood group.', 'bloodGroup');
       const email = getFieldValue('email');
-      if (!/^\S+@\S+\.\S+$/.test(email)) return 'Please enter a valid email address.';
+      if (!/^\S+@\S+\.\S+$/.test(email)) return invalid('Please enter a valid email address.', 'email');
       if (!emailVerified || verifiedEmail !== email.toLowerCase()) {
-        return 'Please verify your email address with the code sent to it.';
+        return invalid('Please verify your email address with the code sent to it.', 'email');
       }
       const mobile = getFieldValue('mobile');
-      if (!/^[0-9+\-\s]{7,15}$/.test(mobile)) return 'Please enter a valid mobile number.';
-      if (!getFieldValue('emergencyName')) return 'Please enter an emergency contact name.';
-      if (!getFieldValue('emergencyRelationship')) return 'Please enter the emergency contact relationship.';
-      if (!getFieldValue('emergencyNumber')) return 'Please enter an emergency contact number.';
+      if (!/^[0-9+\-\s]{7,15}$/.test(mobile)) return invalid('Please enter a valid mobile number.', 'mobile');
+      if (!getFieldValue('emergencyName')) return invalid('Please enter an emergency contact name.', 'emergencyName');
+      if (!getFieldValue('emergencyRelationship')) return invalid('Please enter the emergency contact relationship.', 'emergencyRelationship');
+      if (!getFieldValue('emergencyNumber')) return invalid('Please enter an emergency contact number.', 'emergencyNumber');
     }
     if (n === 2) {
-      if (!getFieldValue('category')) return 'Please select a run category.';
-      if (!getFieldValue('tshirtSize')) return 'Please select a T-shirt size.';
+      if (!getFieldValue('category')) return invalid('Please select a run category.', 'category');
+      if (!getFieldValue('tshirtSize')) return invalid('Please select a T-shirt size.', 'tshirtSize');
     }
     if (n === 3) {
-      if (!getFieldValue('waiverAccepted')) return 'You must agree to the participant disclaimer to continue.';
-      if (!getFieldValue('signature')) return 'Please type your full name as digital consent.';
+      if (!getFieldValue('waiverAccepted')) return invalid('You must agree to the participant disclaimer to continue.', 'waiverAccepted');
+      if (!getFieldValue('signature')) return invalid('Please type your full name as digital consent.', 'signature');
       if (normalizeName(getFieldValue('signature')) !== normalizeName(getFieldValue('fullName'))) {
-        return 'Your name and signature do not match. Please type your full name exactly as entered in Step 1.';
+        return invalid('Your name and signature do not match. Please type your full name exactly as entered in Step 1.', 'signature');
       }
     }
     if (n === 4) {
-      if (!getFieldValue('liabilityAccepted')) return 'You must accept the voluntary participation declaration before paying.';
+      if (!getFieldValue('liabilityAccepted')) return invalid('You must accept the voluntary participation declaration before paying.', 'liabilityAccepted');
       const method = getFieldValue('paymentMethod');
       if (method === 'Bank Transfer') {
-        if (!getFieldValue('payerAccountName')) return 'Please enter the account holder name.';
+        if (!getFieldValue('payerAccountName')) return invalid('Please enter the account holder name.', 'payerAccountName');
         const accountNumber = getFieldValue('payerAccountNumber');
-        if (!accountNumber) return 'Please enter the account number you paid from.';
-        if (!/^\d{6,20}$/.test(accountNumber.replace(/\s/g, ''))) return 'That account number looks incorrect — digits only, 6 to 20 of them.';
+        if (!accountNumber) return invalid('Please enter the account number you paid from.', 'payerAccountNumber');
+        if (!/^\d{6,20}$/.test(accountNumber.replace(/\s/g, ''))) return invalid('That account number looks incorrect — digits only, 6 to 20 of them.', 'payerAccountNumber');
         const ifsc = getFieldValue('payerIfsc');
-        if (!ifsc) return 'Please enter your bank’s IFSC code.';
-        if (!/^[A-Za-z]{4}0[A-Za-z0-9]{6}$/.test(ifsc)) return 'That IFSC code looks incorrect — it should look like SBIN0001234.';
+        if (!ifsc) return invalid('Please enter your bank’s IFSC code.', 'payerIfsc');
+        if (!/^[A-Za-z]{4}0[A-Za-z0-9]{6}$/.test(ifsc)) return invalid('That IFSC code looks incorrect — it should look like SBIN0001234.', 'payerIfsc');
         const utr = getFieldValue('bankUtr');
-        if (!utr) return 'Please enter the UTR / reference number from your transfer.';
+        if (!utr) return invalid('Please enter the UTR / reference number from your transfer.', 'bankUtr');
       } else {
         const upiId = getFieldValue('upiId');
-        if (!upiId) return 'Please enter the UPI ID you paid from.';
-        if (!/^[\w.\-]{2,}@[\w.\-]{2,}$/.test(upiId)) return 'That UPI ID looks incomplete — it should look like name@bank.';
+        if (!upiId) return invalid('Please enter the UPI ID you paid from.', 'upiId');
+        if (!/^[\w.\-]{2,}@[\w.\-]{2,}$/.test(upiId)) return invalid('That UPI ID looks incomplete — it should look like name@bank.', 'upiId');
         const ref = getFieldValue('upiTxnRef');
-        if (!ref) return 'Please enter the UPI transaction ID from your payment confirmation.';
+        if (!ref) return invalid('Please enter the UPI transaction ID from your payment confirmation.', 'upiTxnRef');
       }
       const fileInput = document.getElementById('paymentScreenshot');
-      if (!fileInput.files || !fileInput.files[0]) return 'Please upload a screenshot of your UPI payment.';
-      if (fileInput.files[0].size > 5 * 1024 * 1024) return 'That screenshot is larger than 5 MB. Please upload a smaller image.';
+      if (!fileInput.files || !fileInput.files[0]) return invalid('Please upload a screenshot of your UPI payment.', 'paymentScreenshot');
+      if (fileInput.files[0].size > 5 * 1024 * 1024) return invalid('That screenshot is larger than 5 MB. Please upload a smaller image.', 'paymentScreenshot');
     }
     return null;
   }
@@ -372,6 +441,7 @@
       }
       formBodyForm.style.display = 'none';
       formFooter.style.display = 'none';
+      scrollGuide.hidden = true;
       successView.style.display = 'block';
     } catch (err) {
       // showStep() clears the error banner as part of resetting the step, so it
@@ -393,6 +463,7 @@
     if (currentStep < 4) {
       currentStep += 1;
       showStep(currentStep);
+      modal.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       submitRegistration();
     }
@@ -402,6 +473,7 @@
     if (currentStep > 1) {
       currentStep -= 1;
       showStep(currentStep);
+      modal.scrollTo({ top: 0, behavior: 'smooth' });
     }
   });
 
