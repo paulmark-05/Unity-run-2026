@@ -174,7 +174,7 @@ nav.links .nav-links-register { display: none; }
   padding: 20px 0 36px;
 }
 .hero-counters.hero-closed {
-  grid-template-columns: minmax(0, 520px);
+  grid-template-columns: minmax(0, 640px);
 }
 .closed-notice {
   display: flex;
@@ -204,10 +204,16 @@ nav.links .nav-links-register { display: none; }
   font-size: 0.94rem;
   line-height: 1.6;
   color: var(--ink);
-  max-width: 420px;
+  max-width: 580px;
 }
 .closed-text .text-red { color: var(--red); }
 .closed-text .text-navy { color: var(--navy); }
+.br-mobile { display: none; }
+@media (max-width: 480px) {
+  .hero-counters.hero-closed { grid-template-columns: minmax(0, 340px); }
+  .closed-text { max-width: 310px; }
+  .br-mobile { display: inline; }
+}
 .bento-tile {
   display: flex;
   flex-direction: column;
