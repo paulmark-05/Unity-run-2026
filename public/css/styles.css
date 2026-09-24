@@ -173,6 +173,41 @@ nav.links .nav-links-register { display: none; }
   gap: 14px;
   padding: 20px 0 36px;
 }
+.hero-counters.hero-closed {
+  grid-template-columns: minmax(0, 520px);
+}
+.closed-notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(180deg, #FDEAEA 0%, var(--paper) 70%);
+  border: 1px solid rgba(196,30,42,0.3);
+  border-radius: 18px;
+  padding: 22px 26px;
+  box-shadow: 0 14px 30px -22px rgba(196,30,42,0.35);
+  text-align: center;
+}
+.closed-badge {
+  font-family: 'Inter', Arial, system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--red);
+  padding: 7px 16px;
+  border-radius: 99px;
+}
+.closed-text {
+  margin: 0;
+  font-size: 0.94rem;
+  line-height: 1.6;
+  color: var(--ink);
+  max-width: 420px;
+}
+.closed-text .text-red { color: var(--red); }
+.closed-text .text-navy { color: var(--navy); }
 .bento-tile {
   display: flex;
   flex-direction: column;
