@@ -160,6 +160,12 @@ nav.links .nav-links-register { display: none; }
 /* ---------- HERO ---------- */
 .hero { background: var(--paper); position: relative; overflow: hidden; }
 .hero-top { text-align: center; padding-top: 56px; padding-bottom: 10px; }
+.hero-teaser {
+  margin: 0 0 8px;
+  font-style: italic;
+  color: var(--red);
+  font-size: 1.05rem;
+}
 .hero-logo { max-width: 380px; width: 100%; margin: 0 auto; }
 
 /* Live registration counters — bento-style stat tiles, the first thing
@@ -270,6 +276,7 @@ nav.links .nav-links-register { display: none; }
 .br-mobile { display: none; }
 @media (max-width: 480px) {
   .hero-top { padding-top: 20px; padding-bottom: 2px; }
+  .hero-teaser { font-size: 0.86rem; margin-bottom: 4px; }
   .hero-logo { max-width: 190px; }
   .hero-counters { padding: 10px 0 22px; }
   .hero-counters.hero-closed { grid-template-columns: minmax(0, 340px); }
