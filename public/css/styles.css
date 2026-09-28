@@ -214,24 +214,44 @@ nav.links .nav-links-register { display: none; }
   color: var(--red);
   font-size: 0.9rem;
 }
-.gallery-jump-btn {
-  align-self: flex-end;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: 'Inter', Arial, system-ui, sans-serif;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  color: #fff;
+/* Floats free of the thank-you card entirely — pinned to the viewport,
+   not the page, so it stays put and reachable no matter how far into the
+   card's text someone has scrolled. Hidden once the gallery itself is
+   on screen (see initGallery's IntersectionObserver), since the shortcut
+   is pointless once you've already arrived. */
+.gallery-jump-bubble {
+  position: fixed;
+  bottom: 28px;
+  right: 20px;
+  z-index: 60;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
   background: var(--navy);
-  border-radius: 99px;
-  padding: 8px 16px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-family: 'Inter', Arial, system-ui, sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
   text-decoration: none;
-  transition: background 0.15s ease, transform 0.15s ease;
+  box-shadow: 0 10px 26px -10px rgba(27,34,96,0.55);
+  animation: bubble-float 2.6s ease-in-out infinite;
+  transition: background 0.15s ease;
 }
-.gallery-jump-btn:hover { background: var(--navy-soft); transform: translateY(-1px); }
-.gallery-jump-btn .arrow { font-size: 0.8rem; }
+.gallery-jump-bubble:hover { background: var(--navy-soft); }
+.gallery-jump-bubble[hidden] { display: none; }
+@keyframes bubble-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gallery-jump-bubble { animation: none; }
+}
 .br-mobile { display: none; }
 @media (max-width: 480px) {
   .hero-top { padding-top: 20px; padding-bottom: 2px; }
@@ -242,7 +262,7 @@ nav.links .nav-links-register { display: none; }
   .closed-badge { font-size: 0.64rem; padding: 6px 13px; }
   .closed-text { max-width: 310px; font-size: 0.82rem; line-height: 1.45; }
   .closed-text-outro { font-size: 0.78rem; }
-  .gallery-jump-btn { font-size: 0.64rem; padding: 7px 14px; }
+  .gallery-jump-bubble { width: 68px; height: 68px; font-size: 0.56rem; right: 12px; bottom: 18px; }
   .br-mobile { display: inline; }
 }
 .bento-tile {

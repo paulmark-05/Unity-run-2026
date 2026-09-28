@@ -1063,6 +1063,23 @@
       });
   })();
 
+  // ---------- Floating "View Gallery & Results" bubble ----------
+  // Hides itself once the gallery section is actually on screen — the
+  // shortcut has nothing left to do once you've scrolled to it yourself.
+  (function initGalleryJumpBubble() {
+    const bubble = document.getElementById('galleryJumpBubble');
+    const target = document.getElementById('photos');
+    if (!bubble || !target) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry) bubble.hidden = entry.isIntersecting;
+      },
+      { threshold: 0.15 }
+    );
+    observer.observe(target);
+  })();
+
   // ---------- Results ----------
   (function initResults() {
     const yearTabsEl = document.getElementById('resultsYearTabs');
