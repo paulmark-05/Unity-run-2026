@@ -1068,8 +1068,23 @@
   // shortcut has nothing left to do once you've scrolled to it yourself.
   (function initGalleryJumpBubble() {
     const bubble = document.getElementById('galleryJumpBubble');
+    const arrowEl = document.getElementById('galleryJumpArrow');
     const target = document.getElementById('photos');
     if (!bubble || !target) return;
+
+    // Once scrolled past the gallery (its top edge is above the viewport),
+    // the bubble needs to point back up at it instead of down. A plain
+    // scroll listener (rather than folding this into the observer below)
+    // is what keeps this correct even after a jump straight there — e.g.
+    // a nav-link click from below the gallery, or a page load landing on
+    // a URL hash — where the section's intersection ratio never actually
+    // crosses the observer's threshold along the way.
+    function updateArrowDirection() {
+      if (arrowEl) arrowEl.textContent = target.getBoundingClientRect().top < 0 ? '↑' : '↓';
+    }
+    window.addEventListener('scroll', updateArrowDirection, { passive: true });
+    updateArrowDirection();
+
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
