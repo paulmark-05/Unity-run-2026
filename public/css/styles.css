@@ -17,6 +17,7 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
 body {
   background: var(--paper);
   color: var(--ink);
@@ -213,10 +214,35 @@ nav.links .nav-links-register { display: none; }
   color: var(--red);
   font-size: 0.9rem;
 }
+.gallery-jump-btn {
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Inter', Arial, system-ui, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #fff;
+  background: var(--navy);
+  border-radius: 99px;
+  padding: 8px 16px;
+  text-decoration: none;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.gallery-jump-btn:hover { background: var(--navy-soft); transform: translateY(-1px); }
+.gallery-jump-btn .arrow { font-size: 0.8rem; }
 .br-mobile { display: none; }
 @media (max-width: 480px) {
+  .hero-top { padding-top: 20px; padding-bottom: 2px; }
+  .hero-logo { max-width: 190px; }
+  .hero-counters { padding: 10px 0 22px; }
   .hero-counters.hero-closed { grid-template-columns: minmax(0, 340px); }
-  .closed-text { max-width: 310px; }
+  .closed-notice { padding: 16px 18px; gap: 8px; }
+  .closed-badge { font-size: 0.64rem; padding: 6px 13px; }
+  .closed-text { max-width: 310px; font-size: 0.82rem; line-height: 1.45; }
+  .closed-text-outro { font-size: 0.78rem; }
+  .gallery-jump-btn { font-size: 0.64rem; padding: 7px 14px; }
   .br-mobile { display: inline; }
 }
 .bento-tile {
@@ -1158,7 +1184,6 @@ footer.site { background: var(--paper); color: var(--ink-soft); padding: 44px 0;
 
 @media (max-width: 480px) {
   .wrap { padding-left: 16px; padding-right: 16px; }
-  .hero-top { padding-top: 40px; }
   h1.headline { font-size: 1.9rem; }
   .cat .dist { font-size: 2.1rem; }
   .form-body { padding: 20px; }
