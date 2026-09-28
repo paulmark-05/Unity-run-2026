@@ -694,7 +694,19 @@
     const thumbsEl = document.getElementById('carouselThumbs');
     const prevBtn = document.getElementById('carouselPrev');
     const nextBtn = document.getElementById('carouselNext');
+    const playBadge = document.getElementById('carouselPlay');
     if (!yearTabsEl) return;
+
+    // A manifest entry can be a YouTube link instead of a photo (videoUrl
+    // set) — it still shows a downloaded thumbnail image like any other
+    // slide, just with a play badge over it, and opens on YouTube directly
+    // instead of the local lightbox (which is built around photo download/
+    // share, neither of which make sense for a video).
+    function updatePlayBadge(photo) {
+      const isVideo = Boolean(photo && photo.videoUrl);
+      if (playBadge) playBadge.hidden = !isVideo;
+      if (imgEl) imgEl.classList.toggle('is-video-slide', isVideo);
+    }
 
     const AUTOPLAY_MS = 4500;
     const FADE_MS = 400;
@@ -755,6 +767,7 @@
         imgEl.src = src;
         bgEl.src = src;
         imgEl.alt = `Unity Run ${activeYear} photo ${activeIndex + 1}`;
+        updatePlayBadge(photo);
         frameEl.classList.remove('fading');
       }, FADE_MS);
 
@@ -776,11 +789,17 @@
       carouselEl.hidden = false;
       emptyEl.hidden = true;
       thumbsEl.innerHTML = photos
-        .map((p, i) => `<img class="carousel-thumb" src="assets/gallery/${year}/${p.thumb}" alt="" data-index="${i}" />`)
+        .map((p, i) => `<span class="carousel-thumb-item${p.videoUrl ? ' is-video' : ''}" data-index="${i}"><img class="carousel-thumb" src="assets/gallery/${year}/${p.thumb}" alt="" /></span>`)
         .join('');
-      thumbsEl.querySelectorAll('.carousel-thumb').forEach((t) => {
+      thumbsEl.querySelectorAll('.carousel-thumb-item').forEach((t) => {
         t.addEventListener('click', () => {
-          showPhoto(Number(t.dataset.index));
+          const i = Number(t.dataset.index);
+          const photo = photos[i];
+          if (photo.videoUrl) {
+            window.open(photo.videoUrl, '_blank', 'noopener');
+            return;
+          }
+          showPhoto(i);
           startAutoplay();
         });
       });
@@ -790,6 +809,7 @@
       imgEl.src = firstSrc;
       bgEl.src = firstSrc;
       imgEl.alt = `Unity Run ${year} photo 1`;
+      updatePlayBadge(first);
       counterEl.textContent = `1 / ${photos.length}`;
       thumbsEl.querySelectorAll('.carousel-thumb').forEach((t, i) => t.classList.toggle('active', i === 0));
       startAutoplay();
@@ -857,12 +877,20 @@
     function lightboxGoTo(index) {
       const photos = photosForYear(activeYear);
       if (!photos.length) return;
-      activeIndex = ((index % photos.length) + photos.length) % photos.length;
+      let i = ((index % photos.length) + photos.length) % photos.length;
+      // Video entries open on YouTube directly and never appear inside the
+      // lightbox (its download/share tools don't apply to them) — step past
+      // one if prev/next navigation inside an open lightbox lands on it.
+      for (let guard = 0; photos[i].videoUrl && guard < photos.length; guard++) {
+        i = (i + 1) % photos.length;
+      }
+      activeIndex = i;
       const photo = photos[activeIndex];
       const src = `assets/gallery/${activeYear}/${photo.file}`;
       imgEl.src = src;
       bgEl.src = src;
       imgEl.alt = `Unity Run ${activeYear} photo ${activeIndex + 1}`;
+      updatePlayBadge(photo);
       counterEl.textContent = `${activeIndex + 1} / ${photos.length}`;
       thumbsEl.querySelectorAll('.carousel-thumb').forEach((t, i) => t.classList.toggle('active', i === activeIndex));
       lightboxImg.src = src;
@@ -952,7 +980,16 @@
       setTimeout(() => URL.revokeObjectURL(url), 4000);
     }
 
-    if (imgEl) imgEl.addEventListener('click', openLightbox);
+    if (imgEl) {
+      imgEl.addEventListener('click', () => {
+        const current = photosForYear(activeYear)[activeIndex];
+        if (current && current.videoUrl) {
+          window.open(current.videoUrl, '_blank', 'noopener');
+          return;
+        }
+        openLightbox();
+      });
+    }
     if (lightboxClose) lightboxClose.addEventListener('click', closeLightbox);
     if (lightboxOverlay) {
       lightboxOverlay.addEventListener('click', (e) => {
