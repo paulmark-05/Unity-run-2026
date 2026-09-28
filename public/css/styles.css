@@ -181,11 +181,11 @@ nav.links .nav-links-register { display: none; }
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  background: linear-gradient(180deg, #FDEAEA 0%, var(--paper) 70%);
-  border: 1px solid rgba(196,30,42,0.3);
+  background: linear-gradient(180deg, var(--sky-pale) 0%, var(--paper) 70%);
+  border: 1px solid rgba(27,34,96,0.18);
   border-radius: 18px;
   padding: 22px 26px;
-  box-shadow: 0 14px 30px -22px rgba(196,30,42,0.35);
+  box-shadow: 0 14px 30px -22px rgba(27,34,96,0.3);
   text-align: center;
 }
 .closed-badge {
@@ -195,7 +195,7 @@ nav.links .nav-links-register { display: none; }
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #fff;
-  background: var(--red);
+  background: var(--navy);
   padding: 7px 16px;
   border-radius: 99px;
 }
@@ -208,6 +208,11 @@ nav.links .nav-links-register { display: none; }
 }
 .closed-text .text-red { color: var(--red); }
 .closed-text .text-navy { color: var(--navy); }
+.closed-text-outro {
+  font-style: italic;
+  color: var(--red);
+  font-size: 0.9rem;
+}
 .br-mobile { display: none; }
 @media (max-width: 480px) {
   .hero-counters.hero-closed { grid-template-columns: minmax(0, 340px); }
