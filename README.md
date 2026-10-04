@@ -124,21 +124,56 @@ by skipping the UI. Codes are kept in memory only (a `Map` in
 a restart or scale to multiple instances.
 
 ### 8. Photo gallery
-Each year gets its own folder under `public/assets/gallery/<year>/`, populated
-from a shared Google Drive folder (needs only "Anyone with the link can
-view" — no need to add the service account as a collaborator):
+The 2026 gallery is synchronized automatically from the event's Google Drive
+folder while the Render service is running. Set:
+
+```text
+GOOGLE_GALLERY_FOLDER_ID=<2026 media Drive folder ID>
+GALLERY_YEAR=2026
+GALLERY_SYNC_INTERVAL_MINUTES=15
+```
+
+The service account must have at least Viewer access to the gallery folder. The
+server reads both `image/*` and `video/*` files directly from that Drive folder.
+Images are re-encoded for the web and get thumbnails; Drive videos are cached
+locally with a branded video thumbnail and played inside the same gallery
+carousel. Set `GALLERY_MAX_VIDEO_MB` to control the largest Drive video that may
+be cached (default 250 MB). Files deleted from Drive are removed from the
+cache, and `manifest.json` is refreshed.
+
+The same carousel also contains the event's Facebook, Instagram, YouTube and
+YouTube Shorts items. They use thumbnails and open their official embedded
+players inside the carousel; a small fallback link lets visitors open the
+original platform directly if that platform blocks embedding. There is no
+separate event-video section.
+
+The service syncs once at startup and then on the configured interval. Because
+Render's filesystem is ephemeral, the startup sync repopulates the cache after
+a deploy/restart. On a sleeping/free Render instance, scheduled syncs only run
+while the service is awake; the next request/startup triggers another sync.
+
+The old manual command remains available for local use:
 
 ```bash
 npm run gallery -- 2025 <drive-folder-id>
 ```
 
-This downloads every image in that folder, re-encodes it for the web (full
-size + thumbnail) and writes `manifest.json`. Commit the resulting folder
-and redeploy — the gallery has no Drive dependency at runtime, it just
-serves whatever's checked in. Re-run the same command any time the source
-folder changes to resync (it overwrites that year's files each time).
-
 ### 9. Results
+Create a tab named `Results` with this exact header and rows. Paste the block below starting at cell A1; it is tab-separated so Google Sheets will place each value in its own column. Keep BIB values as text so leading zeroes remain visible.
+
+```text
+Year	Category	Gender	Rank	Bib No	Name	Finish Time
+2026	6K	Male	1	055	Salman Khan	20.57 min
+2026	6K	Male	2	035	Vijoy Roy	21.02 min
+2026	6K	Male	3	114	Samrat Putatunda	21.32 min
+2026	6K	Female	1	092	Jahanara Khatun	22.52 min
+2026	6K	Female	1	051	Rajeashree Debnath	22.52 min
+2026	6K	Female	2	050	Itika Mondal	24.40 min
+2026	6K	Female	3	007	Priyanka Gupta	25.14 min
+```
+
+The site derives `Ser No.` from the row order within each gender and displays `Position` from `Rank`, so the two female runners with the same 22.52-minute time correctly both remain `1st`, matching the official result sheet.
+
 Results only apply to the timed 6KM run (the 4KM walk is untimed, no
 rankings). Fill in the **Results** tab of the same Google Sheet after the
 event — columns are `Year | Category | Gender | Rank | Bib No | Name |
@@ -146,10 +181,11 @@ Finish Time`. Format the Finish Time column as **Plain Text** before typing
 into it, or Sheets will reformat values like `00:35:12` and drop the
 leading zero.
 
-The site reads this tab live (`GET /api/results`), no redeploy needed. A
-year with no rows for a category shows "Result will be published after
-completion of the event"; once rows exist, it shows the top 2 male/female
-finishers per category followed by the full sorted results table.
+The site reads this tab live (`GET /api/results`), so changing the Results
+tab does not require a redeploy. A year with no rows for a category shows
+"Result will be published after completion of the event"; once rows exist,
+the site renders separate Male and Female tables with Ser No., BIB No.,
+Name, Timing, and Position.
 
 ### 10. Deploy to Render
 1. Push this repo to GitHub (already done if you're reading this from the repo).

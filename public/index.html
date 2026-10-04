@@ -164,15 +164,18 @@
       <div class="carousel-frame" id="carouselFrame">
         <img class="carousel-bg" id="carouselBg" src="" alt="" aria-hidden="true" />
         <img class="carousel-img" id="carouselImg" src="" alt="" />
-        <div class="carousel-play" id="carouselPlay" hidden aria-hidden="true">▶</div>
-        <button class="carousel-arrow carousel-prev" id="carouselPrev" type="button" aria-label="Previous photo">‹</button>
-        <button class="carousel-arrow carousel-next" id="carouselNext" type="button" aria-label="Next photo">›</button>
+        <video class="carousel-video" id="carouselVideo" controls playsinline preload="metadata" hidden></video>
+        <iframe class="carousel-embed" id="carouselEmbed" title="Unity Run media player" allow="autoplay; encrypted-media; picture-in-picture; web-share" allowfullscreen hidden></iframe>
+        <button class="carousel-play" id="carouselPlay" type="button" aria-label="Play media" hidden>▶</button>
+        <a class="carousel-external-hint" id="carouselExternalHint" href="#" target="_blank" rel="noopener noreferrer" hidden>Open on platform ↗</a>
+        <button class="carousel-arrow carousel-prev" id="carouselPrev" type="button" aria-label="Previous gallery item">‹</button>
+        <button class="carousel-arrow carousel-next" id="carouselNext" type="button" aria-label="Next gallery item">›</button>
         <div class="carousel-counter" id="carouselCounter"></div>
         <div class="carousel-progress" id="carouselProgress"></div>
       </div>
       <div class="carousel-thumbs" id="carouselThumbs"></div>
     </div>
-    <p class="gallery-empty" id="galleryEmpty" hidden>Photos will be added here soon.</p>
+    <p class="gallery-empty" id="galleryEmpty" hidden>Photos and event videos will be added here soon.</p>
   </div>
 </section>
 

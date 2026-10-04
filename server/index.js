@@ -7,6 +7,7 @@ const multer = require('multer');
 const { Server: SocketIOServer } = require('socket.io');
 const { appendRegistration, getRegistrationStats, getResultRows } = require('./sheets');
 const { uploadPaymentScreenshot, sendMail } = require('./drive');
+const { syncGalleryYear, GALLERY_YEAR } = require('./gallery');
 
 const app = express();
 app.use(express.json());
@@ -167,10 +168,38 @@ site.get('/api/config', async (req, res) => {
   });
 });
 
-// Photos: one folder per year under public/assets/gallery/<year>/, each with
-// a manifest.json written by `npm run gallery`. No sheet/database involved —
-// adding a new year is just running that script and redeploying.
+// Photos: the current event gallery is synchronized from Google Drive at
+// runtime. The server caches optimized images locally so visitors never need
+// Google credentials and the browser never talks directly to Drive.
 const GALLERY_DIR = path.join(__dirname, '..', 'public', 'assets', 'gallery');
+const GALLERY_MEDIA = {
+  '2026': [
+    {
+      type: 'external', platform: 'Facebook', label: 'Unity Run event video',
+      url: 'https://www.facebook.com/share/v/14qBumyDX5p/',
+      embedUrl: 'https://www.facebook.com/plugins/video.php?href=' + encodeURIComponent('https://www.facebook.com/share/v/14qBumyDX5p/') + '&show_text=false&width=900',
+      thumb: 'assets/gallery-social/facebook.svg'
+    },
+    {
+      type: 'external', platform: 'Instagram', label: 'Unity Run Instagram Reel',
+      url: 'https://www.instagram.com/reel/Dd0Zl5rTAwB/?stkn=NWo3bzhqeWp4d3Vs',
+      embedUrl: 'https://www.instagram.com/reel/Dd0Zl5rTAwB/embed',
+      thumb: 'assets/gallery-social/instagram.svg'
+    },
+    {
+      type: 'external', platform: 'YouTube', label: 'Unity Run event video',
+      url: 'https://youtu.be/i7v7WjjfjxM?si=YikVFq7FF8jaDTXW',
+      embedUrl: 'https://www.youtube.com/embed/i7v7WjjfjxM?rel=0',
+      thumb: 'https://i.ytimg.com/vi/i7v7WjjfjxM/hqdefault.jpg'
+    },
+    {
+      type: 'external', platform: 'YouTube Short', label: 'Unity Run Short',
+      url: 'https://youtube.com/shorts/eyB-TPRad7M?si=ZjrKX97CCz7kjKaf',
+      embedUrl: 'https://www.youtube.com/embed/eyB-TPRad7M?rel=0',
+      thumb: 'https://i.ytimg.com/vi/eyB-TPRad7M/hqdefault.jpg'
+    }
+  ]
+};
 
 site.get('/api/gallery', (req, res) => {
   let years = [];
@@ -192,9 +221,11 @@ site.get('/api/gallery', (req, res) => {
       } catch (err) {
         photos = [];
       }
-      return { year, photos };
+      const driveItems = Array.isArray(photos) ? photos : [];
+      const externalItems = (GALLERY_MEDIA[year] || []).map((item) => ({ ...item, source: 'external' }));
+      return { year, items: [...driveItems, ...externalItems], photos: [...driveItems, ...externalItems] };
     })
-    .filter((g) => g.photos.length > 0);
+    .filter((g) => g.items.length > 0);
 
   res.json({ galleries });
 });
@@ -567,6 +598,26 @@ setInterval(async () => {
     console.error('counts broadcast failed:', err.message);
   }
 }, COUNTS_BROADCAST_INTERVAL_MS);
+
+const GALLERY_SYNC_INTERVAL_MS = Math.max(5, Number(process.env.GALLERY_SYNC_INTERVAL_MINUTES || 15)) * 60 * 1000;
+
+async function runGallerySync(reason) {
+  try {
+    const result = await syncGalleryYear();
+    if (!result.skipped) {
+      console.log(`Gallery sync (${reason}): ${result.count} media items (${result.images || 0} images, ${result.videos || 0} Drive videos), ${result.removed} removed.`);
+    }
+  } catch (err) {
+    // Gallery failures must never take down registrations or the rest of the site.
+    console.error(`Gallery sync (${reason}) failed:`, err.message);
+  }
+}
+
+// Sync once on boot, then periodically while the Render instance is running.
+// Render instances are ephemeral, so the boot sync also repopulates the cache
+// after a deploy/restart.
+runGallerySync('startup');
+setInterval(() => runGallerySync('scheduled'), GALLERY_SYNC_INTERVAL_MS);
 
 const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {

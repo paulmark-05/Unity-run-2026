@@ -95,7 +95,13 @@ async function getResultRows() {
       category: String(r[1]).trim(),
       gender: String(r[2] || '').trim(),
       rank: Number(r[3]) || null,
-      bib: String(r[4] || '').trim(),
+      // BIB numbers are three digits on the official results sheet.
+      // Keep text values intact and pad numeric-looking values so 055/035/007
+      // are displayed correctly even if Google Sheets auto-converted them.
+      bib: (() => {
+        const value = String(r[4] || '').trim();
+        return /^\d+$/.test(value) ? value.padStart(3, '0') : value;
+      })(),
       name: String(r[5] || '').trim(),
       time: String(r[6] || '').trim(),
     }));
