@@ -7,7 +7,7 @@ const multer = require('multer');
 const { Server: SocketIOServer } = require('socket.io');
 const { appendRegistration, getRegistrationStats, getResultRows } = require('./sheets');
 const { uploadPaymentScreenshot, sendMail } = require('./drive');
-const { syncGalleryYear, GALLERY_YEAR } = require('./gallery');
+const { syncGalleryYear, getGallerySyncStatus, GALLERY_YEAR } = require('./gallery');
 
 const app = express();
 app.use(express.json());
@@ -177,13 +177,14 @@ const GALLERY_MEDIA = {
     {
       type: 'external', platform: 'Facebook', label: 'Unity Run event video',
       url: 'https://www.facebook.com/share/v/14qBumyDX5p/',
-      embedUrl: 'https://www.facebook.com/plugins/video.php?href=' + encodeURIComponent('https://www.facebook.com/share/v/14qBumyDX5p/') + '&show_text=false&width=900',
-      thumb: 'assets/gallery-social/facebook.svg'
+      embedUrl: null,
+      thumb: 'assets/gallery-social/facebook.svg',
+      unavailableNotice: 'The supplied Facebook share link is currently unavailable. Use the button below to open Facebook directly.'
     },
     {
       type: 'external', platform: 'Instagram', label: 'Unity Run Instagram Reel',
       url: 'https://www.instagram.com/reel/Dd0Zl5rTAwB/?stkn=NWo3bzhqeWp4d3Vs',
-      embedUrl: 'https://www.instagram.com/reel/Dd0Zl5rTAwB/embed',
+      permalink: 'https://www.instagram.com/reel/Dd0Zl5rTAwB/',
       thumb: 'assets/gallery-social/instagram.svg'
     },
     {
@@ -200,6 +201,10 @@ const GALLERY_MEDIA = {
     }
   ]
 };
+
+site.get('/api/gallery/status', (req, res) => {
+  res.json(getGallerySyncStatus());
+});
 
 site.get('/api/gallery', (req, res) => {
   let years = [];

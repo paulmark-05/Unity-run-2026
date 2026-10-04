@@ -125,27 +125,35 @@ a restart or scale to multiple instances.
 
 ### 8. Photo gallery
 The 2026 gallery is synchronized automatically from the event's Google Drive
-folder while the Render service is running. Set:
+media folder while the Render service is running. Set:
 
 ```text
-GOOGLE_GALLERY_FOLDER_ID=<2026 media Drive folder ID>
+GOOGLE_GALLERY_FOLDER_ID=1eWxBetKfI56FFbIfZsIWYVKPGH0C-4VZ
 GALLERY_YEAR=2026
 GALLERY_SYNC_INTERVAL_MINUTES=15
+GALLERY_MAX_VIDEO_MB=250
 ```
 
 The service account must have at least Viewer access to the gallery folder. The
-server reads both `image/*` and `video/*` files directly from that Drive folder.
-Images are re-encoded for the web and get thumbnails; Drive videos are cached
-locally with a branded video thumbnail and played inside the same gallery
-carousel. Set `GALLERY_MAX_VIDEO_MB` to control the largest Drive video that may
-be cached (default 250 MB). Files deleted from Drive are removed from the
-cache, and `manifest.json` is refreshed.
+server recursively reads both `image/*` and `video/*` files, so the media folder
+may contain subfolders such as `Photos/`, `Videos/`, `Winners/`, etc. Images are
+re-encoded for the web and get thumbnails; Drive videos are cached locally with
+a branded video thumbnail and played inside the same gallery carousel. Files
+deleted from Drive are removed from the cache, and `manifest.json` is refreshed.
+
+If gallery media does not appear, open `/api/gallery/status` on the deployed
+site. It reports the last synchronization error without exposing credentials.
+A permission error means the service-account email must be shared on the
+`UNITY RUN 2026 - MEDIA` folder.
 
 The same carousel also contains the event's Facebook, Instagram, YouTube and
-YouTube Shorts items. They use thumbnails and open their official embedded
-players inside the carousel; a small fallback link lets visitors open the
-original platform directly if that platform blocks embedding. There is no
-separate event-video section.
+YouTube Shorts items. Instagram uses the official Instagram embed script to
+render the complete post card when embedding is allowed. YouTube uses its
+official player. The supplied Facebook `/share/v/` link is currently unavailable,
+so the site deliberately avoids showing a broken Facebook iframe and instead
+presents a prominent **View on Facebook** button. The button is also shown for
+the other platforms as a direct fallback. There is no separate event-video
+section.
 
 The service syncs once at startup and then on the configured interval. Because
 Render's filesystem is ephemeral, the startup sync repopulates the cache after

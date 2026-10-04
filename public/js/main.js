@@ -691,6 +691,7 @@
     const imgEl = document.getElementById('carouselImg');
     const videoEl = document.getElementById('carouselVideo');
     const embedEl = document.getElementById('carouselEmbed');
+    const socialEl = document.getElementById('carouselSocial');
     const counterEl = document.getElementById('carouselCounter');
     const progressEl = document.getElementById('carouselProgress');
     const thumbsEl = document.getElementById('carouselThumbs');
@@ -708,7 +709,7 @@
     let autoplayTimer = null;
     let fadeTimer = null;
     let hovering = false;
-    let externalEmbedActive = false;
+    let instagramScriptPromise = null;
 
     function itemsForYear(year) {
       const g = galleries.find((gal) => gal.year === year);
@@ -730,6 +731,9 @@
     function isImage(item) { return item && (item.type === 'image' || !item.type); }
     function isDriveVideo(item) { return item && item.source === 'drive' && item.type === 'video'; }
     function isExternal(item) { return item && item.source === 'external'; }
+    function isInstagram(item) { return isExternal(item) && item.platform === 'Instagram'; }
+    function isFacebook(item) { return isExternal(item) && item.platform === 'Facebook'; }
+    function isYouTube(item) { return isExternal(item) && (item.platform === 'YouTube' || item.platform === 'YouTube Short'); }
 
     function stopProgress() {
       if (!progressEl) return;
@@ -756,23 +760,27 @@
       if (hovering) return;
       const items = itemsForYear(activeYear);
       const current = items[activeIndex];
-      // Do not interrupt an actual Drive video or an embedded social player.
       if (items.length < 2 || isDriveVideo(current) || isExternal(current)) return;
       runProgress();
       autoplayTimer = setInterval(() => showItem(activeIndex + 1), AUTOPLAY_MS);
     }
 
     function clearStage() {
-      externalEmbedActive = false;
+      if (frameEl) frameEl.classList.remove('is-instagram', 'is-facebook', 'is-youtube');
       if (videoEl) {
         videoEl.pause();
         videoEl.removeAttribute('src');
+        videoEl.removeAttribute('poster');
         videoEl.load();
         videoEl.hidden = true;
       }
       if (embedEl) {
         embedEl.src = 'about:blank';
         embedEl.hidden = true;
+      }
+      if (socialEl) {
+        socialEl.hidden = true;
+        socialEl.innerHTML = '';
       }
       if (imgEl) {
         imgEl.hidden = false;
@@ -795,31 +803,91 @@
       }
     }
 
+    function setExternalButton(item, visible = true) {
+      if (!externalHint) return;
+      externalHint.href = item.url || '#';
+      externalHint.textContent = `View on ${item.platform || 'platform'} ↗`;
+      externalHint.hidden = !visible || !item.url;
+    }
+
     function updatePlayBadge(item) {
-      const playable = isDriveVideo(item) || isExternal(item);
+      const playable = isDriveVideo(item) || (isExternal(item) && !isFacebook(item));
       if (playBadge) playBadge.hidden = !playable;
       if (imgEl) imgEl.classList.toggle('is-video-slide', playable);
       if (imgEl) imgEl.classList.toggle('is-external-slide', isExternal(item));
-      if (externalHint) {
-        externalHint.hidden = !isExternal(item) || externalEmbedActive;
-        if (isExternal(item)) externalHint.href = item.url || '#';
-      }
+      if (isExternal(item)) setExternalButton(item, true);
     }
 
-    function activateExternalEmbed(item) {
-      if (!isExternal(item) || !embedEl) return;
-      if (!item.embedUrl) {
-        window.open(item.url, '_blank', 'noopener,noreferrer');
-        return;
-      }
+    function loadInstagramScript() {
+      if (window.instgrm && window.instgrm.Embeds) return Promise.resolve();
+      if (instagramScriptPromise) return instagramScriptPromise;
+      instagramScriptPromise = new Promise((resolve, reject) => {
+        const existing = document.querySelector('script[data-instagram-embed]');
+        if (existing) {
+          existing.addEventListener('load', resolve, { once: true });
+          existing.addEventListener('error', reject, { once: true });
+          return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://www.instagram.com/embed.js';
+        script.async = true;
+        script.dataset.instagramEmbed = 'true';
+        script.onload = resolve;
+        script.onerror = () => reject(new Error('Instagram embed script could not be loaded.'));
+        document.head.appendChild(script);
+      });
+      return instagramScriptPromise;
+    }
+
+    async function activateInstagram(item) {
+      if (!isInstagram(item) || !socialEl) return;
       stopAutoplay();
-      externalEmbedActive = true;
       if (imgEl) imgEl.hidden = true;
       if (bgEl) bgEl.hidden = true;
-      embedEl.src = item.embedUrl;
+      if (playBadge) playBadge.hidden = true;
+      if (frameEl) frameEl.classList.add('is-instagram');
+      socialEl.hidden = false;
+      const permalink = item.permalink || item.url || '';
+      socialEl.innerHTML = `<div class="instagram-stage"><blockquote class="instagram-media" data-instgrm-permalink="${escapeHtml(permalink)}" data-instgrm-version="14"><a href="${escapeHtml(item.url || '#')}" target="_blank" rel="noopener noreferrer">View this post on Instagram</a></blockquote></div>`;
+      try {
+        await loadInstagramScript();
+        if (window.instgrm && window.instgrm.Embeds) window.instgrm.Embeds.process();
+      } catch (_) {
+        // The highlighted platform button remains available if embedding is blocked.
+      }
+      setExternalButton(item, true);
+    }
+
+    function activateFacebook(item) {
+      if (!isFacebook(item)) return;
+      // The supplied /share/v/ URL is currently unavailable. Avoid a broken
+      // Facebook iframe and present the official Facebook action prominently.
+      stopAutoplay();
+      if (frameEl) frameEl.classList.add('is-facebook');
+      if (playBadge) playBadge.hidden = true;
+      if (imgEl) imgEl.hidden = false;
+      if (bgEl) bgEl.hidden = false;
+      setExternalButton(item, true);
+    }
+
+    function activateYouTube(item) {
+      if (!isYouTube(item) || !embedEl) return;
+      stopAutoplay();
+      if (imgEl) imgEl.hidden = true;
+      if (bgEl) bgEl.hidden = true;
+      if (frameEl) frameEl.classList.add('is-youtube');
+      embedEl.src = item.embedUrl || item.url;
       embedEl.hidden = false;
       if (playBadge) playBadge.hidden = true;
-      if (externalHint) externalHint.hidden = false;
+      setExternalButton(item, true);
+    }
+
+    function activateExternal(item) {
+      if (!isExternal(item)) return;
+      if (isFacebook(item)) activateFacebook(item);
+      else if (isInstagram(item)) activateInstagram(item);
+      else if (isYouTube(item)) activateYouTube(item);
+      else setExternalButton(item, true);
     }
 
     function activateDriveVideo(item, year) {
@@ -827,14 +895,18 @@
       stopAutoplay();
       if (imgEl) imgEl.hidden = true;
       if (bgEl) bgEl.hidden = true;
-      if (videoEl) {
-        videoEl.src = itemSrc(year, item);
-        videoEl.poster = itemThumb(item, year);
-        videoEl.hidden = false;
-        videoEl.load();
-        videoEl.play().catch(() => {});
-      }
+      videoEl.src = itemSrc(year, item);
+      videoEl.poster = itemThumb(item, year);
+      videoEl.hidden = false;
+      videoEl.load();
+      videoEl.play().catch(() => {});
       if (playBadge) playBadge.hidden = true;
+    }
+
+    function activateCurrentItem() {
+      const item = itemsForYear(activeYear)[activeIndex];
+      if (isDriveVideo(item)) activateDriveVideo(item, activeYear);
+      else if (isExternal(item)) activateExternal(item);
     }
 
     function showItem(index, immediate = false) {
@@ -842,19 +914,15 @@
       if (!items.length) return;
       activeIndex = ((index % items.length) + items.length) % items.length;
       const item = items[activeIndex];
-
       if (fadeTimer) clearTimeout(fadeTimer);
       const apply = () => {
         clearStage();
         setPreview(item, activeYear);
         updatePlayBadge(item);
         counterEl.textContent = `${activeIndex + 1} / ${items.length}`;
-        thumbsEl.querySelectorAll('.carousel-thumb').forEach((t, i) => {
-          t.classList.toggle('active', i === activeIndex);
-        });
+        thumbsEl.querySelectorAll('.carousel-thumb').forEach((t, i) => t.classList.toggle('active', i === activeIndex));
         if (frameEl) frameEl.classList.remove('fading');
       };
-
       if (immediate) apply();
       else {
         if (frameEl) frameEl.classList.add('fading');
@@ -871,7 +939,6 @@
         stopAutoplay();
         return;
       }
-
       carouselEl.hidden = false;
       emptyEl.hidden = true;
       stopAutoplay();
@@ -881,22 +948,15 @@
         const label = isImage(item) ? `Photo ${i + 1}` : `${item.platform || 'Video'}: ${item.label || 'Play media'}`;
         return `<button type="button" class="carousel-thumb-item${mediaClass}" data-index="${i}" aria-label="${escapeHtml(label)}"><img class="carousel-thumb" src="${escapeHtml(thumb)}" alt="" /></button>`;
       }).join('');
-
       thumbsEl.querySelectorAll('.carousel-thumb-item').forEach((button) => {
         button.addEventListener('click', () => {
           const i = Number(button.dataset.index);
           showItem(i);
           const item = items[i];
-          if (isDriveVideo(item)) {
-            setTimeout(() => activateDriveVideo(item, year), FADE_MS + 20);
-          } else if (isExternal(item)) {
-            setTimeout(() => activateExternalEmbed(item), FADE_MS + 20);
-          } else {
-            startAutoplay();
-          }
+          if (isDriveVideo(item) || isExternal(item)) setTimeout(activateCurrentItem, FADE_MS + 20);
+          else startAutoplay();
         });
       });
-
       activeIndex = 0;
       showItem(0, true);
       startAutoplay();
@@ -917,24 +977,12 @@
 
     if (prevBtn) prevBtn.addEventListener('click', () => { showItem(activeIndex - 1); startAutoplay(); });
     if (nextBtn) nextBtn.addEventListener('click', () => { showItem(activeIndex + 1); startAutoplay(); });
-
-    if (playBadge) {
-      playBadge.addEventListener('click', (e) => {
-        e.preventDefault();
-        const item = itemsForYear(activeYear)[activeIndex];
-        if (isDriveVideo(item)) activateDriveVideo(item, activeYear);
-        else if (isExternal(item)) activateExternalEmbed(item);
-      });
-    }
-
-    if (imgEl) {
-      imgEl.addEventListener('click', () => {
-        const item = itemsForYear(activeYear)[activeIndex];
-        if (isDriveVideo(item)) activateDriveVideo(item, activeYear);
-        else if (isExternal(item)) activateExternalEmbed(item);
-        else openLightbox();
-      });
-    }
+    if (playBadge) playBadge.addEventListener('click', (e) => { e.preventDefault(); activateCurrentItem(); });
+    if (imgEl) imgEl.addEventListener('click', () => {
+      const item = itemsForYear(activeYear)[activeIndex];
+      if (isDriveVideo(item) || isExternal(item)) activateCurrentItem();
+      else openLightbox();
+    });
 
     if (frameEl) {
       frameEl.addEventListener('mouseenter', () => { hovering = true; stopAutoplay(); });
@@ -955,6 +1003,31 @@
         else { showItem(activeIndex - 1); startAutoplay(); }
       });
     }
+
+    fetch('api/gallery')
+      .then(async (r) => {
+        if (!r.ok) throw new Error(`Gallery API returned ${r.status}`);
+        return r.json();
+      })
+      .then((data) => {
+        galleries = Array.isArray(data.galleries) ? data.galleries : [];
+        if (!galleries.length) {
+          yearTabsEl.hidden = true;
+          carouselEl.hidden = true;
+          emptyEl.hidden = false;
+          emptyEl.textContent = 'Gallery media is temporarily unavailable. Please check back soon.';
+          return;
+        }
+        yearTabsEl.hidden = false;
+        renderYearTabs();
+        renderCarousel(galleries[0].year);
+      })
+      .catch(() => {
+        yearTabsEl.hidden = true;
+        carouselEl.hidden = true;
+        emptyEl.hidden = false;
+        emptyEl.textContent = 'Gallery media is temporarily unavailable. Please check back soon.';
+      });
 
     // ---------- Lightbox: photos only ----------
     const lightboxOverlay = document.getElementById('lightboxOverlay');
@@ -1111,19 +1184,6 @@
       });
     }
 
-    fetch('api/gallery')
-      .then((r) => r.json())
-      .then((data) => {
-        galleries = data.galleries || [];
-        if (!galleries.length) {
-          yearTabsEl.hidden = true;
-          emptyEl.hidden = false;
-          return;
-        }
-        renderYearTabs();
-        renderCarousel(galleries[0].year);
-      })
-      .catch(() => { emptyEl.hidden = false; });
   })();
 
   // ---------- Floating "View Gallery & Results" bubble ----------
@@ -1203,21 +1263,19 @@
               <caption class="sr-only">${escapeHtml(gender)} results for the 6KM timed run</caption>
               <thead>
                 <tr>
-                  <th scope="col" class="results-col-serial">Ser No.</th>
+                  <th scope="col" class="results-col-position">Position</th>
                   <th scope="col" class="results-col-bib">BIB No.</th>
                   <th scope="col">Name</th>
                   <th scope="col" class="results-col-time">Timing</th>
-                  <th scope="col" class="results-col-position">Position</th>
                 </tr>
               </thead>
               <tbody>
                 ${sorted.map((r, i) => `
                   <tr>
-                    <td class="results-serial">${i + 1}</td>
+                    <td class="results-position">${escapeHtml(ordinal(r.rank))}</td>
                     <td class="results-bib">${escapeHtml(r.bib || '')}</td>
                     <td class="results-name">${escapeHtml(r.name || '')}</td>
                     <td class="results-time">${escapeHtml(r.time || '')}</td>
-                    <td class="results-position">${escapeHtml(ordinal(r.rank))}</td>
                   </tr>
                 `).join('')}
               </tbody>
