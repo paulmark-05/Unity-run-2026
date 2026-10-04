@@ -116,7 +116,7 @@ async function listMedia(drive) {
         q: `'${parentId}' in parents and trashed = false`,
         fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, md5Checksum, size)',
         pageSize: 1000,
-        orderBy: 'name_natural, name',
+        orderBy: 'name',
         pageToken,
         supportsAllDrives: true,
         includeItemsFromAllDrives: true,
